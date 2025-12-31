@@ -19,19 +19,22 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
     const [minute, setMinute] = useState<number | undefined>(date?.getMinutes());
     const [amPm, setAmPm] = useState<string | undefined>(date && date.getHours() >= 12 ? "pm" : "am");
 
-     useEffect(() => {
-        // Sync internal state with external prop change
-        setYear(date?.getFullYear());
-        setMonth(date?.getMonth());
-        setDay(date?.getDate());
-        const dateHour = date ? date.getHours() : undefined;
-        setHour(dateHour !== undefined ? dateHour % 12 || 12 : undefined);
-        setMinute(date?.getMinutes());
-        setAmPm(dateHour !== undefined && dateHour >= 12 ? "pm" : "am");
-    }, [date]);
-
-
+    // This single useEffect hook now handles both updating the internal state from the prop
+    // and updating the prop from the internal state, preventing an infinite loop.
     useEffect(() => {
+        // Update internal state only if the external date has changed
+        const internalDate = new Date(year ?? 0, month ?? 0, day ?? 1, (amPm === 'pm' && hour !== 12 ? (hour ?? 0) + 12 : (amPm === 'am' && hour === 12 ? 0 : hour ?? 0)), minute ?? 0);
+        if (date?.getTime() !== internalDate.getTime()) {
+            setYear(date?.getFullYear());
+            setMonth(date?.getMonth());
+            setDay(date?.getDate());
+            const dateHour = date ? date.getHours() : undefined;
+            setHour(dateHour !== undefined ? dateHour % 12 || 12 : undefined);
+            setMinute(date?.getMinutes());
+            setAmPm(dateHour !== undefined && dateHour >= 12 ? "pm" : "am");
+        }
+
+        // Update external state only if a full date is formed internally
         if (year !== undefined && month !== undefined && day !== undefined && hour !== undefined && minute !== undefined && amPm !== undefined) {
             let fullHour = hour;
             if (amPm === "pm" && hour < 12) {
@@ -40,16 +43,17 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
                 fullHour = 0;
             }
             const newDate = new Date(year, month, day, fullHour, minute);
-
-            // Prevent infinite loop by checking if date is different
+            
+            // Critical Check: Only call setDate if the new date is different
             if (date?.getTime() !== newDate.getTime()) {
-                setDate(newDate);
+                 setDate(newDate);
             }
         } else if (date !== undefined) {
-            // If date is defined but internal state is not, clear external state
-            setDate(undefined);
+             setDate(undefined);
         }
-    }, [year, month, day, hour, minute, amPm, setDate, date]);
+    // The dependency array now correctly tracks all pieces of the date.
+    }, [year, month, day, hour, minute, amPm, date, setDate]);
+
 
     const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i);
     const months = Array.from({ length: 12 }, (_, i) => ({
