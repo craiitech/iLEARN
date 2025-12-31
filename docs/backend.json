@@ -98,6 +98,10 @@
                   "participation": {
                     "type": "number",
                     "description": "Percentage weight for participation."
+                  },
+                  "majorExamination": {
+                    "type": "number",
+                    "description": "Percentage weight for the major examination for the term."
                   }
                 }
               }

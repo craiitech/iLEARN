@@ -18,6 +18,7 @@ type TermComponent = {
     quizzes?: number;
     activities?: number;
     participation?: number;
+    majorExamination?: number;
 };
 
 type GradingTerm = {
@@ -35,10 +36,11 @@ type GradingPolicyEditorProps = {
 };
 
 const defaultComponents: TermComponent = {
-    assignments: 40,
-    quizzes: 30,
-    activities: 20,
+    assignments: 25,
+    quizzes: 25,
+    activities: 10,
     participation: 10,
+    majorExamination: 30,
 };
 
 const defaultPolicy: GradingPolicy = [
@@ -147,6 +149,11 @@ export function GradingPolicyEditor({ courseRef, initialPolicy }: GradingPolicyE
         }
     };
 
+    const formatComponentKey = (key: string) => {
+        if (key === 'majorExamination') return 'Major Examination';
+        return key.charAt(0).toUpperCase() + key.slice(1);
+    }
+
     return (
         <Card>
             <CardHeader>
@@ -190,7 +197,7 @@ export function GradingPolicyEditor({ courseRef, initialPolicy }: GradingPolicyE
 
                                     {Object.keys(term.components).map((key) => (
                                         <div key={key} className="grid grid-cols-3 items-center gap-4">
-                                            <Label htmlFor={`comp-${termIndex}-${key}`} className="capitalize text-right">{key}</Label>
+                                            <Label htmlFor={`comp-${termIndex}-${key}`} className="capitalize text-right">{formatComponentKey(key)}</Label>
                                             <div className="col-span-2 relative">
                                                 <Input
                                                     id={`comp-${termIndex}-${key}`}
