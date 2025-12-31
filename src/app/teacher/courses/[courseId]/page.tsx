@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
-import { doc, collection, query } from "firebase/firestore";
+import { doc, collection, query, orderBy } from "firebase/firestore";
 import { FileCheck } from "lucide-react";
 import { useParams } from "next/navigation";
 import { CreateBlockDialog } from "@/components/course/create-block-dialog";
@@ -27,6 +27,13 @@ const typeIcons = {
     Assignment: <FileCheck className="h-5 w-5 text-muted-foreground" />
 }
 
+type LearningPathItem = {
+    id: string;
+    title: string;
+    createdAt: { toDate: () => Date };
+    type: 'Lesson' | 'Quiz' | 'Assignment';
+}
+
 export default function CourseDetailPage() {
     const { firestore, user } = useFirebase();
     const params = useParams();
@@ -44,14 +51,41 @@ export default function CourseDetailPage() {
     
     const lessonsQuery = useMemoFirebase(() => {
         if (!courseRef) return null;
-        return query(collection(courseRef, 'lessons'));
+        return query(collection(courseRef, 'lessons'), orderBy('createdAt', 'asc'));
+    }, [courseRef]);
+
+    const assignmentsQuery = useMemoFirebase(() => {
+        if (!courseRef) return null;
+        return query(collection(courseRef, 'assignments'), orderBy('createdAt', 'asc'));
+    }, [courseRef]);
+
+    const quizzesQuery = useMemoFirebase(() => {
+        if (!courseRef) return null;
+        return query(collection(courseRef, 'quizzes'), orderBy('createdAt', 'asc'));
     }, [courseRef]);
 
     const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
     const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
     const { data: lessons, isLoading: areLessonsLoading } = useCollection(lessonsQuery);
+    const { data: assignments, isLoading: areAssignmentsLoading } = useCollection(assignmentsQuery);
+    const { data: quizzes, isLoading: areQuizzesLoading } = useCollection(quizzesQuery);
 
-    const learningPath = lessons?.map(lesson => ({ ...lesson, type: 'Lesson' as const })) || [];
+    const learningPath: LearningPathItem[] = useMemo(() => {
+        const allItems = [
+            ...(lessons?.map(item => ({ ...item, type: 'Lesson' as const })) || []),
+            ...(assignments?.map(item => ({ ...item, type: 'Assignment' as const })) || []),
+            ...(quizzes?.map(item => ({ ...item, type: 'Quiz' as const })) || []),
+        ];
+
+        // Sort by 'createdAt' timestamp
+        return allItems.sort((a, b) => {
+            const dateA = a.createdAt?.toDate() || new Date(0);
+            const dateB = b.createdAt?.toDate() || new Date(0);
+            return dateA.getTime() - dateB.getTime();
+        });
+    }, [lessons, assignments, quizzes]);
+
+    const isPathLoading = areLessonsLoading || areAssignmentsLoading || areQuizzesLoading;
 
 
     if (isCourseLoading) {
@@ -152,6 +186,12 @@ export default function CourseDetailPage() {
                                 Add Lesson
                             </Link>
                         </Button>
+                        <Button asChild variant="outline">
+                            <Link href={`/teacher/courses/${courseId}/assignments/new`}>
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                Add Assignment
+                            </Link>
+                        </Button>
                          <Button asChild variant="outline">
                             <Link href={`/teacher/quizzes/new?courseId=${courseId}`}>
                                 <PlusCircle className="mr-2 h-4 w-4"/>
@@ -162,7 +202,7 @@ export default function CourseDetailPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flow-root">
-                        {areLessonsLoading ? (
+                        {isPathLoading ? (
                              <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
                                <Loader2 className="h-8 w-8 animate-spin text-primary"/>
                                <p className="text-muted-foreground text-sm">Loading curriculum...</p>
