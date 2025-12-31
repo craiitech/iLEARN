@@ -100,15 +100,16 @@ function EditAssignmentPageContent() {
     },
   });
 
+  const { reset } = form;
   useEffect(() => {
     if (assignment) {
-      form.reset({
+      reset({
         ...assignment,
         dueDate: assignment.dueDate ? new Date(assignment.dueDate) : undefined,
         closingDate: assignment.closingDate ? new Date(assignment.closingDate) : undefined,
       });
     }
-  }, [assignment]);
+  }, [assignment, reset]);
 
 
   const { fields: criteriaFields, append: appendCriterion, remove: removeCriterion } = useFieldArray({
