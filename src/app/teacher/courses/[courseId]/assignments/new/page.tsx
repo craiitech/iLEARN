@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
@@ -28,6 +27,7 @@ import { collection } from "firebase/firestore";
 import { useState, Suspense, useMemo } from "react";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 
 const rubricLevelSchema = z.object({
     levelTitle: z.string().min(1, "Level title is required."),
@@ -424,3 +424,5 @@ export default function NewAssignmentPage() {
         </Suspense>
     )
 }
+
+    
