@@ -1,0 +1,376 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the RSU iLEARN LMS system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name."
+        },
+        "role": {
+          "type": "string",
+          "description": "User's role (e.g., Teacher, Student)."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName",
+        "role"
+      ]
+    },
+    "Block": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Block",
+      "type": "object",
+      "description": "Represents a class block within the LMS.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Block entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the block."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the block."
+        },
+        "teacherId": {
+          "type": "string",
+          "description": "Reference to User (Teacher). (Relationship: User 1:N Block)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "teacherId"
+      ]
+    },
+    "Assignment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Assignment",
+      "type": "object",
+      "description": "Represents an assignment within a block.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Assignment entity."
+        },
+        "blockId": {
+          "type": "string",
+          "description": "Reference to Block. (Relationship: Block 1:N Assignment)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the assignment."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the assignment."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date of the assignment.",
+          "format": "date-time"
+        },
+        "pointsPossible": {
+          "type": "number",
+          "description": "Maximum points possible for assignment"
+        }
+      },
+      "required": [
+        "id",
+        "blockId",
+        "title",
+        "description",
+        "dueDate",
+        "pointsPossible"
+      ]
+    },
+    "Quiz": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quiz",
+      "type": "object",
+      "description": "Represents a quiz within a block.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Quiz entity."
+        },
+        "blockId": {
+          "type": "string",
+          "description": "Reference to Block. (Relationship: Block 1:N Quiz)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the quiz."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the quiz."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date of the quiz.",
+          "format": "date-time"
+        },
+        "questions": {
+          "type": "array",
+          "description": "Array of question IDs that belong to this quiz. (Relationship: Quiz 1:N Question)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pointsPossible": {
+          "type": "number",
+          "description": "Maximum points possible for assignment"
+        }
+      },
+      "required": [
+        "id",
+        "blockId",
+        "title",
+        "description",
+        "dueDate",
+        "questions",
+        "pointsPossible"
+      ]
+    },
+    "Question": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Question",
+      "type": "object",
+      "description": "Represents a question within a quiz.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Question entity."
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Reference to Quiz. (Relationship: Quiz 1:N Question)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text of the question."
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of question (e.g., multiple choice, true/false)."
+        },
+        "options": {
+          "type": "array",
+          "description": "Array of options for the question (if applicable).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "correctAnswer": {
+          "type": "string",
+          "description": "The correct answer for the question."
+        },
+        "pointsPossible": {
+          "type": "number",
+          "description": "Points possible for question"
+        }
+      },
+      "required": [
+        "id",
+        "quizId",
+        "text",
+        "type",
+        "correctAnswer",
+        "pointsPossible"
+      ]
+    },
+    "Submission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Submission",
+      "type": "object",
+      "description": "Represents a student's submission for an assignment or quiz.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Submission entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User (Student). (Relationship: User 1:N Submission)"
+        },
+        "assignmentId": {
+          "type": "string",
+          "description": "Reference to Assignment. (Relationship: Assignment 1:N Submission)"
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Reference to Quiz. (Relationship: Quiz 1:N Submission)"
+        },
+        "submissionTime": {
+          "type": "string",
+          "description": "Timestamp of when the submission was made.",
+          "format": "date-time"
+        },
+        "googleDriveUrl": {
+          "type": "string",
+          "description": "URL of the submitted Google Drive document.",
+          "format": "uri"
+        },
+        "grade": {
+          "type": "number",
+          "description": "Grade received for the submission."
+        },
+        "feedback": {
+          "type": "string",
+          "description": "Feedback provided by the teacher."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "submissionTime"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. User can only read/write their own profile. Includes standard user profile information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/blocks/{blockId}",
+        "definition": {
+          "entityName": "Block",
+          "schema": {
+            "$ref": "#/backend/entities/Block"
+          },
+          "description": "Stores blocks created by a specific teacher. Includes denormalized 'teacherId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the teacher (user)."
+            },
+            {
+              "name": "blockId",
+              "description": "The unique identifier of the block."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/blocks/{blockId}/assignments/{assignmentId}",
+        "definition": {
+          "entityName": "Assignment",
+          "schema": {
+            "$ref": "#/backend/entities/Assignment"
+          },
+          "description": "Stores assignments belonging to a specific block.",
+          "params": [
+            {
+              "name": "blockId",
+              "description": "The unique identifier of the block."
+            },
+            {
+              "name": "assignmentId",
+              "description": "The unique identifier of the assignment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/blocks/{blockId}/quizzes/{quizId}",
+        "definition": {
+          "entityName": "Quiz",
+          "schema": {
+            "$ref": "#/backend/entities/Quiz"
+          },
+          "description": "Stores quizzes belonging to a specific block.",
+          "params": [
+            {
+              "name": "blockId",
+              "description": "The unique identifier of the block."
+            },
+            {
+              "name": "quizId",
+              "description": "The unique identifier of the quiz."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/quizzes/{quizId}/questions/{questionId}",
+        "definition": {
+          "entityName": "Question",
+          "schema": {
+            "$ref": "#/backend/entities/Question"
+          },
+          "description": "Stores questions belonging to a specific quiz.",
+          "params": [
+            {
+              "name": "quizId",
+              "description": "The unique identifier of the quiz."
+            },
+            {
+              "name": "questionId",
+              "description": "The unique identifier of the question."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/submissions/{submissionId}",
+        "definition": {
+          "entityName": "Submission",
+          "schema": {
+            "$ref": "#/backend/entities/Submission"
+          },
+          "description": "Stores submissions for assignments or quizzes made by a specific user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (student)."
+            },
+            {
+              "name": "submissionId",
+              "description": "The unique identifier of the submission."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the RSU iLEARN LMS application, focusing on role-based access control, efficient data retrieval, and scalable architecture. The structure adheres to the principle of Authorization Independence by denormalizing authorization data (e.g., teacherId for Blocks) to avoid costly and restrictive `get()` calls in security rules. Path-based ownership is leveraged where applicable to simplify security rules and improve performance.\n\nThe structure is segregated to ensure that documents within a collection share the same security posture (e.g., separating user profiles from other data). User-owned data (Blocks) are nested under the user's document to ensure clear ownership and easy querying.\n\nQAPs (Rules are not Filters) are supported by leveraging structural segregation. For instance, listing blocks is restricted to teachers, and this rule is enforced at the collection level, preventing unauthorized access.\n\nThe chosen structure supports the integrity of ownership, timestamps, and denormalized data. For example, Blocks are owned by teachers, and this relationship is enforced at the data structure level through the path `/users/{userId}/blocks/{blockId}`. This structure naturally restricts data access to authorized users only.\n\n*   `/users/{userId}`: Stores user profiles. This collection is secured such that only the user or an admin can read/write their document.\n*   `/users/{userId}/blocks/{blockId}`: Stores blocks owned by a specific teacher. The `teacherId` is denormalized into each block document. This allows for efficient queries of blocks belonging to a specific teacher without needing to perform collection group queries.\n*   `/blocks/{blockId}/assignments/{assignmentId}`: Stores assignments belonging to a specific block. The structure assumes that assignments are accessible to all students enrolled in a block. If finer-grained access control is needed, the structure might require adjustments.\n*   `/blocks/{blockId}/quizzes/{quizId}`: Stores quizzes belonging to a specific block.\n*   `/quizzes/{quizId}/questions/{questionId}`: Stores questions associated with each quiz.\n*   `/users/{userId}/submissions/{submissionId}`: Stores submissions made by a student, it can be for either a quiz or an assignment. `assignmentId` and `quizId` must be stored in each submission.\n\nDenormalization is key to achieving Authorization Independence. The `teacherId` is explicitly stored in the `Block` entity, allowing security rules to validate teacher access without requiring a `get()` call to the `User` document. This ensures atomic operations are possible when creating blocks and assignments. This approach applies similarly to other relationships (e.g., assignments and submissions)."
+  }
+}
