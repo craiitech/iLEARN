@@ -125,15 +125,6 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
                 onValueChange={(value) => {
                     const newMinute = parseInt(value);
                     setMinute(newMinute);
-                    if (day !== undefined && year !== undefined && month !== undefined && hour !== undefined && amPm !== undefined) {
-                         let fullHour = hour;
-                        if (amPm === "pm" && hour < 12) {
-                            fullHour = hour + 12;
-                        } else if (amPm === "am" && hour === 12) {
-                            fullHour = 0;
-                        }
-                        setDate(new Date(year, month, day, fullHour, newMinute));
-                    }
                 }}
                 disabled={disabled}
             >
