@@ -243,7 +243,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Lesson",
       "type": "object",
-      "description": "Represents a lesson within a course.",
+      "description": "Represents a lesson within a course, including pedagogical structure.",
       "properties": {
         "id": {
           "type": "string",
@@ -257,12 +257,28 @@
           "type": "string",
           "description": "Title of the lesson."
         },
+        "learningOutcome": {
+            "type": "string",
+            "description": "The expected learning outcome for the student after completing the lesson."
+        },
+        "objectives": {
+            "type": "string",
+            "description": "Specific objectives for the lesson, can be a list in Markdown format."
+        },
+        "sdgIntegration": {
+            "type": "string",
+            "description": "Description of how the lesson integrates with UN Sustainable Development Goals."
+        },
+        "internationalization": {
+            "type": "string",
+            "description": "Description of the internationalization aspects of the lesson."
+        },
         "content": {
           "type": "string",
-          "description": "The content of the lesson in Markdown format."
+          "description": "The main content of the lesson in Markdown format."
         }
       },
-      "required": ["id", "courseId", "title", "content"]
+      "required": ["id", "courseId", "title", "learningOutcome", "objectives", "content"]
     }
   },
   "auth": {
@@ -347,5 +363,3 @@
     ]
   }
 }
-
-    

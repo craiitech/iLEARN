@@ -12,6 +12,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +28,10 @@ import { useState } from "react";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
+  learningOutcome: z.string().min(10, "Learning outcome must be at least 10 characters long."),
+  objectives: z.string().min(10, "Objectives must be at least 10 characters long."),
+  sdgIntegration: z.string().optional(),
+  internationalization: z.string().optional(),
   content: z.string().min(10, "Content must be at least 10 characters long."),
 });
 
@@ -42,6 +47,10 @@ export default function NewLessonPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      learningOutcome: "",
+      objectives: "",
+      sdgIntegration: "",
+      internationalization: "",
       content: "",
     },
   });
@@ -94,7 +103,7 @@ export default function NewLessonPage() {
       <Card>
         <CardHeader>
           <CardTitle>Create New Lesson</CardTitle>
-          <CardDescription>Fill out the details for your new lesson.</CardDescription>
+          <CardDescription>Fill out the details for your new structured lesson.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -112,12 +121,47 @@ export default function NewLessonPage() {
                   </FormItem>
                 )}
               />
-               <FormField
+
+              <FormField
+                control={form.control}
+                name="learningOutcome"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Learning Outcome</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="What should students be able to do after this lesson?" {...field} />
+                    </FormControl>
+                     <FormDescription>
+                      Describe the main takeaway or skill the student will gain.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="objectives"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Objectives</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="List the specific learning objectives." {...field} rows={4} />
+                    </FormControl>
+                     <FormDescription>
+                      Use bullet points (e.g., using '-' or '*') for multiple objectives.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
                 control={form.control}
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Lesson Content</FormLabel>
+                    <FormLabel>Main Lesson Content</FormLabel>
                     <FormControl>
                       <Textarea placeholder="Write the main content of your lesson here. You can use Markdown for formatting." {...field} rows={15} />
                     </FormControl>
@@ -125,6 +169,35 @@ export default function NewLessonPage() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="sdgIntegration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SDG Integration (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="How does this lesson connect to the UN Sustainable Development Goals?" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="internationalization"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Internationalization (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="How does this lesson incorporate international perspectives?" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" asChild>
                     <Link href={`/teacher/courses/${courseId}`}>Cancel</Link>
@@ -141,5 +214,3 @@ export default function NewLessonPage() {
     </>
   );
 }
-
-    
