@@ -122,6 +122,7 @@ function EditAssignmentPageContent() {
   });
 
   const totalPoints = useMemo(() => {
+    if (!watchedRubric) return 0;
     return watchedRubric.reduce((total, criterion) => {
         const maxPointsInCriterion = criterion.levels.reduce((max, level) => Math.max(max, level.points || 0), 0);
         return total + maxPointsInCriterion;
