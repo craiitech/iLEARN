@@ -26,20 +26,45 @@ import {
 import { UserNav } from "@/components/user-nav";
 import { useFirebase } from "@/firebase";
 import { useEffect } from "react";
-import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
+import { useRouter, usePathname } from "next/navigation";
+
 
 export default function TeacherLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { auth, user, isUserLoading } = useFirebase();
+  const { user, isUserLoading } = useFirebase();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      initiateAnonymousSignIn(auth);
+    // If auth is not loading and there's no user, redirect to login.
+    // We also make sure we are not already on the login page to avoid a redirect loop.
+    if (!isUserLoading && !user && pathname !== '/teacher/login') {
+      router.push('/teacher/login');
     }
-  }, [auth, user, isUserLoading]);
+    // If the user is logged in and tries to go to the login page, redirect to dashboard.
+    if (!isUserLoading && user && pathname === '/teacher/login') {
+      router.push('/teacher/dashboard');
+    }
+  }, [user, isUserLoading, router, pathname]);
+
+  // While loading authentication state, show a loader.
+  // If there's no user and we are not on the login page, also show a loader
+  // to prevent a flash of the old page content before redirection.
+  if (isUserLoading || (!user && pathname !== '/teacher/login')) {
+      return (
+          <div className="flex h-screen w-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+      );
+  }
+
+  // If we are on the login page, render the children directly without the sidebar layout.
+  if (pathname === '/teacher/login') {
+    return <>{children}</>;
+  }
 
   return (
     <SidebarProvider>

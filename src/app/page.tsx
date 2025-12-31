@@ -30,7 +30,7 @@ export default function LandingPage() {
         </h1>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Button asChild>
-            <a href="/teacher/dashboard">Login</a>
+            <a href="/teacher/login">Login</a>
           </Button>
         </nav>
       </header>
@@ -59,7 +59,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                    <Button asChild size="lg">
-                     <a href="/teacher/dashboard">Teacher Access</a>
+                     <a href="/teacher/login">Teacher Access</a>
                    </Button>
                    <Button asChild variant="secondary" size="lg">
                      <a href="/student/dashboard">Student Portal</a>
