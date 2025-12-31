@@ -110,10 +110,9 @@ service cloud.firestore {
      */
     match /users/{teacherId}/courses/{courseId} {
         // TODO: Add student read access once an enrollment model is defined.
-        allow get, list: if isOwner(teacherId);
-        allow create: if isOwner(teacherId) && request.resource.data.teacherId == teacherId;
+        allow get, list, delete: if isOwner(teacherId);
+        allow create: if isOwner(teacherId);
         allow update: if isOwner(teacherId) && resource != null && isImmutable('teacherId');
-        allow delete: if isOwner(teacherId) && resource != null;
     }
 
     // -------------------------------------------------------------------------
