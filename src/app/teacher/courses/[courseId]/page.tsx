@@ -280,7 +280,7 @@ export default function CourseDetailPage() {
                             </CardHeader>
                             <CollapsibleContent>
                                 {courseRef && <GradingPolicyEditor courseRef={courseRef} initialPolicy={course.gradingPolicy} onSaveSuccess={() => setIsPolicyOpen(false)} />}
-                            </Collapsib_content>
+                            </CollapsibleContent>
                         </Card>
                     </Collapsible>
                 </div>
