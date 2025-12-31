@@ -64,6 +64,16 @@
         "teacherId": {
           "type": "string",
           "description": "The ID of the teacher who owns this course blueprint."
+        },
+        "gradingPolicy": {
+            "type": "object",
+            "description": "Defines the weighting for different assessment types.",
+            "properties": {
+                "assignments": { "type": "number", "description": "Percentage weight for assignments." },
+                "quizzes": { "type": "number", "description": "Percentage weight for quizzes." },
+                "activities": { "type": "number", "description": "Percentage weight for other activities or exercises." },
+                "participation": { "type": "number", "description": "Percentage weight for participation." }
+            }
         }
       },
       "required": ["id", "title", "courseCode", "units", "courseType", "syllabusLink", "teacherId"]

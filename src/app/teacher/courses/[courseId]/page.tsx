@@ -19,7 +19,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
+import { GradingPolicyEditor } from "@/components/course/grading-policy-editor";
 
 
 const typeIcons = {
@@ -129,116 +130,122 @@ export default function CourseDetailPage() {
                  </div>
             </div>
 
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Course Blocks</CardTitle>
-                        <CardDescription>Individual sections for this course blueprint.</CardDescription>
-                    </div>
-                    {courseRef && <CreateBlockDialog courseRef={courseRef} />}
-                </CardHeader>
-                <CardContent>
-                    {areBlocksLoading && <Loader2 className="h-6 w-6 animate-spin" />}
-                    {!areBlocksLoading && blocks && blocks.length > 0 && (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Block Code</TableHead>
-                                    <TableHead>Schedule</TableHead>
-                                    <TableHead>Students</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {blocks.map((block) => (
-                                    <TableRow key={block.id}>
-                                        <TableCell className="font-medium">{block.blockCode}</TableCell>
-                                        <TableCell>{block.schedule}</TableCell>
-                                        <TableCell>0</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm">Manage</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    )}
-                     {!areBlocksLoading && (!blocks || blocks.length === 0) && (
-                        <div className="text-center p-8 flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed">
-                             <BookCopy className="h-12 w-12 text-muted-foreground" />
-                             <h3 className="text-lg font-semibold">No Blocks Created</h3>
-                             <p className="text-muted-foreground text-sm max-w-sm mx-auto">Create the first block for this course to set a schedule and enroll students.</p>
-                             {courseRef && <CreateBlockDialog courseRef={courseRef} />}
-                         </div>
-                     )}
-                </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Course Blocks</CardTitle>
+                                <CardDescription>Individual sections for this course blueprint.</CardDescription>
+                            </div>
+                            {courseRef && <CreateBlockDialog courseRef={courseRef} />}
+                        </CardHeader>
+                        <CardContent>
+                            {areBlocksLoading && <Loader2 className="h-6 w-6 animate-spin" />}
+                            {!areBlocksLoading && blocks && blocks.length > 0 && (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Block Code</TableHead>
+                                            <TableHead>Schedule</TableHead>
+                                            <TableHead>Students</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {blocks.map((block) => (
+                                            <TableRow key={block.id}>
+                                                <TableCell className="font-medium">{block.blockCode}</TableCell>
+                                                <TableCell>{block.schedule}</TableCell>
+                                                <TableCell>0</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="outline" size="sm">Manage</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
+                             {!areBlocksLoading && (!blocks || blocks.length === 0) && (
+                                <div className="text-center p-8 flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed">
+                                     <BookCopy className="h-12 w-12 text-muted-foreground" />
+                                     <h3 className="text-lg font-semibold">No Blocks Created</h3>
+                                     <p className="text-muted-foreground text-sm max-w-sm mx-auto">Create the first block for this course to set a schedule and enroll students.</p>
+                                     {courseRef && <CreateBlockDialog courseRef={courseRef} />}
+                                 </div>
+                             )}
+                        </CardContent>
+                    </Card>
 
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Master Learning Path</CardTitle>
-                        <CardDescription>Drag and drop to reorder items for all blocks of this course.</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button asChild variant="outline">
-                            <Link href={`/teacher/courses/${courseId}/lessons/new`}>
-                                <PlusCircle className="mr-2 h-4 w-4"/>
-                                Add Lesson
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline">
-                            <Link href={`/teacher/courses/${courseId}/assignments/new`}>
-                                <PlusCircle className="mr-2 h-4 w-4"/>
-                                Add Assignment
-                            </Link>
-                        </Button>
-                         <Button asChild variant="outline">
-                            <Link href={`/teacher/quizzes/new?courseId=${courseId}`}>
-                                <PlusCircle className="mr-2 h-4 w-4"/>
-                                Add Quiz
-                            </Link>
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="flow-root">
-                        {isPathLoading ? (
-                             <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
-                               <Loader2 className="h-8 w-8 animate-spin text-primary"/>
-                               <p className="text-muted-foreground text-sm">Loading curriculum...</p>
-                           </div>
-                        ) : learningPath.length > 0 ? (
-                          <ul className="space-y-3">
-                              {learningPath.map((item) => (
-                                  <li key={item.id} className="flex items-center gap-4 rounded-md border bg-background p-3 shadow-sm">
-                                      <GripVertical className="h-5 w-5 cursor-grab text-muted-foreground" />
-                                      {typeIcons[item.type]}
-                                      <span className="flex-grow font-medium">{item.title}</span>
-                                      <span className="text-sm text-muted-foreground">{item.type}</span>
-                                      <div className="flex items-center gap-2">
-                                          <Button variant="ghost" size="icon">
-                                              <Pencil className="h-4 w-4" />
-                                              <span className="sr-only">Edit</span>
-                                          </Button>
-                                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                              <Trash2 className="h-4 w-4" />
-                                               <span className="sr-only">Delete</span>
-                                          </Button>
-                                      </div>
-                                  </li>
-                              ))}
-                          </ul>
-                        ) : (
-                            <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
-                               <h3 className="text-lg font-semibold">Empty Learning Path</h3>
-                               <p className="text-muted-foreground text-sm">Add lessons, quizzes, and assignments to build the curriculum.</p>
-                           </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Master Learning Path</CardTitle>
+                                <CardDescription>Drag and drop to reorder items for all blocks of this course.</CardDescription>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button asChild variant="outline">
+                                    <Link href={`/teacher/courses/${courseId}/lessons/new`}>
+                                        <PlusCircle className="mr-2 h-4 w-4"/>
+                                        Add Lesson
+                                    </Link>
+                                </Button>
+                                <Button asChild variant="outline">
+                                    <Link href={`/teacher/courses/${courseId}/assignments/new`}>
+                                        <PlusCircle className="mr-2 h-4 w-4"/>
+                                        Add Assignment
+                                    </Link>
+                                </Button>
+                                 <Button asChild variant="outline">
+                                    <Link href={`/teacher/quizzes/new?courseId=${courseId}`}>
+                                        <PlusCircle className="mr-2 h-4 w-4"/>
+                                        Add Quiz
+                                    </Link>
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flow-root">
+                                {isPathLoading ? (
+                                     <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
+                                       <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+                                       <p className="text-muted-foreground text-sm">Loading curriculum...</p>
+                                   </div>
+                                ) : learningPath.length > 0 ? (
+                                  <ul className="space-y-3">
+                                      {learningPath.map((item) => (
+                                          <li key={item.id} className="flex items-center gap-4 rounded-md border bg-background p-3 shadow-sm">
+                                              <GripVertical className="h-5 w-5 cursor-grab text-muted-foreground" />
+                                              {typeIcons[item.type]}
+                                              <span className="flex-grow font-medium">{item.title}</span>
+                                              <span className="text-sm text-muted-foreground">{item.type}</span>
+                                              <div className="flex items-center gap-2">
+                                                  <Button variant="ghost" size="icon">
+                                                      <Pencil className="h-4 w-4" />
+                                                      <span className="sr-only">Edit</span>
+                                                  </Button>
+                                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                      <Trash2 className="h-4 w-4" />
+                                                       <span className="sr-only">Delete</span>
+                                                  </Button>
+                                              </div>
+                                          </li>
+                                      ))}
+                                  </ul>
+                                ) : (
+                                    <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
+                                       <h3 className="text-lg font-semibold">Empty Learning Path</h3>
+                                       <p className="text-muted-foreground text-sm">Add lessons, quizzes, and assignments to build the curriculum.</p>
+                                   </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="lg:col-span-1 space-y-8">
+                    {courseRef && <GradingPolicyEditor courseRef={courseRef} initialPolicy={course.gradingPolicy} />}
+                </div>
+            </div>
         </div>
     );
-
-    
+}
