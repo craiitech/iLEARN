@@ -22,7 +22,7 @@ import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";

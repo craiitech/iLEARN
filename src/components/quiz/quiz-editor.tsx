@@ -79,7 +79,7 @@ export function QuizEditor({ initialQuiz, quizRef, course }: QuizEditorProps) {
         questions: initialQuiz.questions,
       });
     }
-  }, [initialQuiz, form]);
+  }, [initialQuiz, form.reset]);
 
   async function onSave(values: QuizFormValues) {
     setIsSaving(true);
@@ -269,3 +269,5 @@ export function QuizEditor({ initialQuiz, quizRef, course }: QuizEditorProps) {
     </Form>
   );
 }
+
+    
