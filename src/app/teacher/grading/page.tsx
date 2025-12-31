@@ -5,10 +5,10 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const assignmentsToGrade = [
-    { id: "1", title: "Final Project Proposal", block: "ENG-101", submissions: 15, total: 25 },
-    { id: "2", title: "Lab Report #3", block: "BIO-205", submissions: 22, total: 22 },
-    { id: "3", title: "History Essay: The Cold War", block: "HIST-310", submissions: 5, total: 30 },
-    { id: "4", title: "Calculus Problem Set 7", block: "MATH-210", submissions: 3, total: 18 },
+    { id: "1", title: "Final Project Proposal", course: "ENG-101", submissions: 15, total: 25 },
+    { id: "2", title: "Lab Report #3", course: "BIO-205", submissions: 22, total: 22 },
+    { id: "3", title: "History Essay: The Cold War", course: "HIST-310", submissions: 5, total: 30 },
+    { id: "4", title: "Calculus Problem Set 7", course: "MATH-210", submissions: 3, total: 18 },
 ];
 
 export default function GradingPage() {
@@ -25,7 +25,7 @@ export default function GradingPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Assignment</TableHead>
-                                <TableHead>Block</TableHead>
+                                <TableHead>Course</TableHead>
                                 <TableHead>Submissions</TableHead>
                                 <TableHead><span className="sr-only">Actions</span></TableHead>
                             </TableRow>
@@ -35,7 +35,7 @@ export default function GradingPage() {
                                 <TableRow key={assignment.id}>
                                     <TableCell className="font-medium">{assignment.title}</TableCell>
                                     <TableCell>
-                                        <Badge variant="outline">{assignment.block}</Badge>
+                                        <Badge variant="outline">{assignment.course}</Badge>
                                     </TableCell>
                                     <TableCell>{assignment.submissions} / {assignment.total}</TableCell>
                                     <TableCell className="text-right">

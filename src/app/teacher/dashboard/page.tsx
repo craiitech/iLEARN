@@ -11,7 +11,7 @@ export default function TeacherDashboard() {
         <h1 className="text-2xl font-semibold font-headline md:text-3xl">Home</h1>
         <div className="flex gap-2">
             <Button asChild>
-                <Link href="/teacher/blocks/new"><PlusCircle /> Create Block</Link>
+                <Link href="/teacher/courses/new"><PlusCircle /> Create Course</Link>
             </Button>
             <Button asChild variant="outline">
                 <Link href="/teacher/quizzes/new">Create Quiz</Link>
@@ -21,7 +21,7 @@ export default function TeacherDashboard() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Blocks</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
             <Book className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -104,7 +104,7 @@ export default function TeacherDashboard() {
                     Assignment
                   </TableHead>
                   <TableHead className="hidden xl:table-column">
-                    Block
+                    Course
                   </TableHead>
                   <TableHead className="text-right">Submitted</TableHead>
                 </TableRow>
