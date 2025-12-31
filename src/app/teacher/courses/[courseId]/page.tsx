@@ -30,6 +30,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useToast } from "@/hooks/use-toast";
 
 
 const typeIcons = {
@@ -41,7 +44,7 @@ const typeIcons = {
     "Lab Activity": <FileCheck className="h-5 w-g text-muted-foreground" />
 }
 
-type LearningPathItem = {
+export type LearningPathItem = {
     id: string;
     title: string;
     createdAt: { toDate: () => Date };
@@ -70,6 +73,8 @@ export default function CourseDetailPage() {
     const params = useParams();
     const courseId = params.courseId as string;
     const [isPolicyOpen, setIsPolicyOpen] = useState(true);
+    const [itemToDelete, setItemToDelete] = useState<LearningPathItem | null>(null);
+    const { toast } = useToast();
 
     const courseRef = useMemoFirebase(() => {
         if (!user || !courseId) return null;
@@ -130,6 +135,37 @@ export default function CourseDetailPage() {
 
     const isPathLoading = areLessonsLoading || areAssignmentsLoading || areQuizzesLoading;
     const isLabCourse = course?.courseType === 'laboratory' || course?.courseType === 'lec_lab';
+
+    const handleDelete = () => {
+        if (!itemToDelete || !courseRef) return;
+        
+        let subcollectionName = '';
+        switch(itemToDelete.type) {
+            case 'Lesson':
+                subcollectionName = 'lessons';
+                break;
+            case 'Quiz':
+                subcollectionName = 'quizzes';
+                break;
+            case 'Assignment':
+            case 'Activity':
+            case 'Exercise':
+            case 'Lab Activity':
+                subcollectionName = 'assignments';
+                break;
+        }
+
+        if (subcollectionName) {
+            const itemRef = doc(collection(courseRef, subcollectionName), itemToDelete.id);
+            deleteDocumentNonBlocking(itemRef);
+            toast({
+                title: "Item Deleted",
+                description: `"${itemToDelete.title}" has been removed from the learning path.`
+            });
+        }
+
+        setItemToDelete(null);
+    }
 
 
     if (isCourseLoading) {
@@ -287,7 +323,7 @@ export default function CourseDetailPage() {
                                                                         <span className="sr-only">Edit</span>
                                                                     </Link>
                                                                   </Button>
-                                                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setItemToDelete(item)}>
                                                                       <Trash2 className="h-4 w-4" />
                                                                        <span className="sr-only">Delete</span>
                                                                   </Button>
@@ -330,6 +366,23 @@ export default function CourseDetailPage() {
                     </Collapsible>
                 </div>
             </div>
+
+            <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the item
+                        <span className="font-bold"> "{itemToDelete?.title}"</span>.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
+
