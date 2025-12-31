@@ -20,16 +20,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save, PlusCircle, Trash2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useFirebase } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection } from "firebase/firestore";
 import { useState, Suspense } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 const rubricItemSchema = z.object({
   criterion: z.string().min(1, "Criterion cannot be empty."),
@@ -167,6 +164,9 @@ function NewAssignmentPageContent() {
                         <FormControl>
                           <Textarea placeholder={`Provide instructions, requirements, and submission guidelines for this ${type.toLowerCase()}.`} {...field} rows={8} />
                         </FormControl>
+                         <FormDescription>
+                          You can use markdown to define different point levels (e.g., '5pts: Excellent, 3pts: Good').
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -299,37 +299,13 @@ function NewAssignmentPageContent() {
                         name="dueDate"
                         render={({ field }) => (
                             <FormItem className="flex flex-col">
-                            <FormLabel>Due Date</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
+                                <FormLabel>Due Date</FormLabel>
+                                <DateTimePicker
+                                    date={field.value}
+                                    setDate={field.onChange}
                                 />
-                                </PopoverContent>
-                            </Popover>
-                            <FormDescription>The recommended deadline for submission.</FormDescription>
-                            <FormMessage />
+                                <FormDescription>The recommended deadline for submission.</FormDescription>
+                                <FormMessage />
                             </FormItem>
                         )}
                         />
@@ -339,37 +315,11 @@ function NewAssignmentPageContent() {
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
                                 <FormLabel>Closing Date</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "pl-3 text-left font-normal",
-                                            !field.value && "text-muted-foreground"
-                                        )}
-                                        >
-                                        {field.value ? (
-                                            format(field.value, "PPP")
-                                        ) : (
-                                            <span>Pick a date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={(date) =>
-                                            form.getValues('dueDate') ? date < form.getValues('dueDate')! : false
-                                        }
-                                        initialFocus
-                                    />
-                                    </PopoverContent>
-                                </Popover>
+                                 <DateTimePicker
+                                    date={field.value}
+                                    setDate={field.onChange}
+                                    disabled={!form.watch('dueDate')}
+                                />
                                 <FormDescription>No submissions will be accepted after this date.</FormDescription>
                                 <FormMessage />
                                 </FormItem>
@@ -400,5 +350,3 @@ export default function NewAssignmentPage() {
         </Suspense>
     )
 }
-
-    
