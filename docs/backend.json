@@ -238,6 +238,31 @@
         }
       },
       "required": ["id", "userId", "submissionTime"]
+    },
+    "Lesson": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Lesson",
+      "type": "object",
+      "description": "Represents a lesson within a course.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Lesson entity."
+        },
+        "courseId": {
+          "type": "string",
+          "description": "Reference to Course."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the lesson."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the lesson in Markdown format."
+        }
+      },
+      "required": ["id", "courseId", "title", "content"]
     }
   },
   "auth": {
@@ -280,6 +305,16 @@
         }
       },
       {
+        "path": "/users/{teacherId}/courses/{courseId}/lessons/{lessonId}",
+        "definition": {
+          "entityName": "Lesson",
+          "schema": {
+            "$ref": "#/entities/Lesson"
+          },
+          "description": "Stores lesson content for a course."
+        }
+      },
+      {
         "path": "/users/{teacherId}/courses/{courseId}/assignments/{assignmentId}",
         "definition": {
           "entityName": "Assignment",
@@ -312,3 +347,5 @@
     ]
   }
 }
+
+    

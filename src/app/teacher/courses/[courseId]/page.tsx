@@ -141,9 +141,11 @@ export default function CourseDetailPage() {
                         <CardDescription>Drag and drop to reorder items for all blocks of this course.</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline">
-                            <PlusCircle className="mr-2 h-4 w-4"/>
-                            Add Lesson
+                        <Button asChild variant="outline">
+                            <Link href={`/teacher/courses/${courseId}/lessons/new`}>
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                Add Lesson
+                            </Link>
                         </Button>
                          <Button asChild variant="outline">
                             <Link href={`/teacher/quizzes/new?courseId=${courseId}`}>
@@ -188,3 +190,5 @@ export default function CourseDetailPage() {
         </div>
     );
 }
+
+    
