@@ -11,7 +11,10 @@ export default function TeacherDashboard() {
         <h1 className="text-2xl font-semibold font-headline md:text-3xl">Home</h1>
         <div className="flex gap-2">
             <Button asChild>
-                <Link href="/teacher/quizzes/new"><PlusCircle /> Create Quiz</Link>
+                <Link href="/teacher/blocks/new"><PlusCircle /> Create Block</Link>
+            </Button>
+            <Button asChild variant="outline">
+                <Link href="/teacher/quizzes/new">Create Quiz</Link>
             </Button>
         </div>
       </div>

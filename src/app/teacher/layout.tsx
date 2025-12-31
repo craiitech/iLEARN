@@ -46,7 +46,6 @@ export default function TeacherLayout({
               <SidebarMenuButton
                 href="/teacher/dashboard"
                 asChild
-                isActive
                 tooltip="Home"
               >
                 <Link href="/teacher/dashboard">
@@ -56,8 +55,8 @@ export default function TeacherLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#" asChild tooltip="Blocks">
-                <Link href="#">
+              <SidebarMenuButton href="/teacher/blocks" asChild tooltip="Blocks" isActive>
+                <Link href="/teacher/blocks">
                   <Book />
                   <span>Blocks</span>
                 </Link>
