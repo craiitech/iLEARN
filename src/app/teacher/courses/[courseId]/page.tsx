@@ -51,7 +51,7 @@ export default function CourseDetailPage() {
     const { firestore, user } = useFirebase();
     const params = useParams();
     const courseId = params.courseId as string;
-    const [isPolicyCollapsed, setIsPolicyCollapsed] = useState(false);
+    const [isPolicyOpen, setIsPolicyOpen] = useState(true);
 
     const courseRef = useMemoFirebase(() => {
         if (!user || !courseId) return null;
@@ -264,7 +264,7 @@ export default function CourseDetailPage() {
                     </Card>
                 </div>
                 <div className="lg:col-span-1 space-y-8">
-                     <Collapsible open={!isPolicyCollapsed} onOpenChange={setIsPolicyCollapsed}>
+                     <Collapsible open={isPolicyOpen} onOpenChange={setIsPolicyOpen}>
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-x-2">
                                 <div>
@@ -279,8 +279,8 @@ export default function CourseDetailPage() {
                                 </CollapsibleTrigger>
                             </CardHeader>
                             <CollapsibleContent>
-                                {courseRef && <GradingPolicyEditor courseRef={courseRef} initialPolicy={course.gradingPolicy} onSaveSuccess={() => setIsPolicyCollapsed(true)} />}
-                            </CollapsibleContent>
+                                {courseRef && <GradingPolicyEditor courseRef={courseRef} initialPolicy={course.gradingPolicy} onSaveSuccess={() => setIsPolicyOpen(false)} />}
+                            </Collapsib_content>
                         </Card>
                     </Collapsible>
                 </div>
