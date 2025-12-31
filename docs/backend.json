@@ -258,7 +258,7 @@
         }
       },
       {
-        "path": "/courses/{courseId}",
+        "path": "/users/{teacherId}/courses/{courseId}",
         "definition": {
           "entityName": "Course",
           "schema": {
@@ -268,17 +268,17 @@
         }
       },
       {
-        "path": "/courses/{courseId}/blocks/{blockId}",
+        "path": "/users/{teacherId}/courses/{courseId}/blocks/{blockId}",
         "definition": {
           "entityName": "Block",
           "schema": {
             "$ref": "#/entities/Block"
           },
-          "description": "Stores specific sections/blocks of a course."
+          "description": "Stores specific sections/blocks of a course, owned by the teacher."
         }
       },
       {
-        "path": "/courses/{courseId}/assignments/{assignmentId}",
+        "path": "/users/{teacherId}/courses/{courseId}/assignments/{assignmentId}",
         "definition": {
           "entityName": "Assignment",
           "schema": {
@@ -288,7 +288,7 @@
         }
       },
       {
-        "path": "/courses/{courseId}/quizzes/{quizId}",
+        "path": "/users/{teacherId}/courses/{courseId}/quizzes/{quizId}",
         "definition": {
           "entityName": "Quiz",
           "schema": {

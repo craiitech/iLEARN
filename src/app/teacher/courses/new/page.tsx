@@ -21,6 +21,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import { useFirebase } from "@/firebase";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection } from "firebase/firestore";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters long."),
@@ -34,6 +37,7 @@ const formSchema = z.object({
 export default function NewCoursePage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { firestore, user } = useFirebase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,15 +51,45 @@ export default function NewCoursePage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // In a real app, you would get an ID from the database after creation.
-    const newCourseId = "1"; // Mocking a new course ID
-    toast({
-      title: "Course Created!",
-      description: `The course blueprint "${values.title}" has been successfully created.`,
-    });
-    router.push(`/teacher/courses/${newCourseId}`);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore || !user) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "You must be logged in to create a course.",
+        });
+        return;
+    }
+
+    try {
+        const coursesCollection = collection(firestore, `users/${user.uid}/courses`);
+        const newCourseRef = await addDocumentNonBlocking(coursesCollection, {
+            ...values,
+            teacherId: user.uid,
+            createdAt: new Date(),
+        });
+        
+        toast({
+            title: "Course Created!",
+            description: `The course blueprint "${values.title}" has been successfully created.`,
+        });
+
+        if (newCourseRef) {
+            router.push(`/teacher/courses/${newCourseRef.id}`);
+        } else {
+            // Fallback in case the optimistic non-blocking ref isn't available
+            // This might happen in some edge cases.
+            router.push('/teacher/courses');
+        }
+
+    } catch (error) {
+        console.error("Error creating course:", error);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Could not create the course. Please try again.",
+        });
+    }
   }
 
   return (
@@ -170,7 +204,7 @@ export default function NewCoursePage() {
                 <Button type="button" variant="outline" asChild>
                     <Link href="/teacher/courses">Cancel</Link>
                 </Button>
-                <Button type="submit">Create Course Blueprint</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting || !user}>Create Course Blueprint</Button>
               </div>
             </form>
           </Form>

@@ -1,20 +1,12 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2 } from "lucide-react";
 import Link from "next/link";
-
-// Mock data for a single course's content
-const courseDetails = {
-    id: "1",
-    title: "English Composition 101",
-    syllabusLink: "https://docs.google.com/document/d/1V3t5tB8F9n5qV6F8d7s6g5f4h3j2k1l0p9o8i7u6y5/edit?usp=sharing",
-    learningPath: [
-        { id: "item-1", type: "Lesson", title: "Introduction to Argumentative Writing" },
-        { id: "item-2", type: "Lesson", title: "Crafting a Strong Thesis Statement" },
-        { id: "item-3", type: "Quiz", title: "Thesis Statement Check" },
-        { id: "item-4", type: "Assignment", title: "Outline for Argumentative Essay" },
-    ]
-};
+import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { FileCheck } from "lucide-react";
 
 const typeIcons = {
     Lesson: <FileText className="h-5 w-5 text-muted-foreground" />,
@@ -23,8 +15,43 @@ const typeIcons = {
 }
 
 export default function CourseDetailPage({ params }: { params: { courseId: string } }) {
-    // In a real app, you'd fetch courseDetails based on params.courseId
-    const { title, learningPath, syllabusLink } = courseDetails;
+    const { firestore, user } = useFirebase();
+
+    const courseRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, `users/${user.uid}/courses`, params.courseId);
+    }, [firestore, user, params.courseId]);
+
+    const { data: course, isLoading } = useDoc(courseRef);
+
+    // Mock learning path for now
+    const learningPath: {id: string, type: 'Lesson' | 'Quiz' | 'Assignment', title: string}[] = course ? [
+        { id: "item-1", type: "Lesson", title: "Introduction to Argumentative Writing" },
+        { id: "item-2", type: "Lesson", title: "Crafting a Strong Thesis Statement" },
+        { id: "item-3", type: "Quiz", title: "Thesis Statement Check" },
+        { id: "item-4", type: "Assignment", title: "Outline for Argumentative Essay" },
+    ] : [];
+
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+            </div>
+        );
+    }
+
+    if (!course) {
+        return (
+            <div className="text-center">
+                <h2 className="text-xl font-semibold">Course not found</h2>
+                <p className="text-muted-foreground">This course may have been deleted or you may not have permission to view it.</p>
+                <Button asChild variant="outline" className="mt-4">
+                    <Link href="/teacher/courses"><ArrowLeft className="mr-2 h-4 w-4"/>Back to All Courses</Link>
+                </Button>
+            </div>
+        )
+    }
 
     return (
         <div className="container mx-auto p-0">
@@ -33,12 +60,12 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
                     <Button asChild variant="outline" size="sm" className="mb-2">
                         <Link href="/teacher/courses"><ArrowLeft className="mr-2 h-4 w-4"/>Back to All Courses</Link>
                     </Button>
-                    <h1 className="text-3xl font-headline font-bold">{title}</h1>
+                    <h1 className="text-3xl font-headline font-bold">{course.title}</h1>
                     <p className="text-muted-foreground">Manage the master curriculum. Arrange lessons, quizzes, and assignments that will be used by all blocks of this course.</p>
                 </div>
                  <div className="flex items-center gap-2">
                      <Button asChild variant="secondary">
-                        <Link href={syllabusLink} target="_blank">
+                        <Link href={course.syllabusLink} target="_blank">
                             <ExternalLink className="mr-2 h-4 w-4"/>
                             View Syllabus
                         </Link>
@@ -67,7 +94,7 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
                           {learningPath.map((item) => (
                               <li key={item.id} className="flex items-center gap-4 rounded-md border bg-background p-3 shadow-sm">
                                   <GripVertical className="h-5 w-5 cursor-grab text-muted-foreground" />
-                                  {typeIcons[item.type as keyof typeof typeIcons]}
+                                  {typeIcons[item.type]}
                                   <span className="flex-grow font-medium">{item.title}</span>
                                   <span className="text-sm text-muted-foreground">{item.type}</span>
                                   <div className="flex items-center gap-2">
@@ -93,6 +120,3 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
         </div>
     );
 }
-
-// In a real app, you would need to import FileCheck from lucide-react
-import { FileCheck } from "lucide-react";

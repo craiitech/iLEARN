@@ -12,6 +12,7 @@
  * @section Data Structure
  * The data is structured hierarchically to reflect ownership and relationships clearly.
  * - /users/{userId}: Contains private user profiles.
+ * - /users/{userId}/courses/{courseId}: Contains a teacher's master course blueprints.
  * - /users/{userId}/submissions/{submissionId}: Contains a student's private submissions.
  * - /users/{teacherId}/blocks/{blockId}: Contains a teacher's course blocks and all
  *   nested content (assignments, quizzes, questions). This nested structure is critical
@@ -20,7 +21,7 @@
  * @section Key Security Decisions
  * - User Isolation: Users cannot list or view other users' profiles or data trees.
  * - Nested Course Content: To ensure clear ownership, all course materials (assignments,
- *   quizzes, questions) are nested under the teacher who owns them (`/users/{teacherId}/blocks/...`).
+ *   quizzes, questions) are nested under the teacher who owns them (`/users/{teacherId}/courses/...`).
  *   This avoids complex and insecure rules that would be required with top-level collections.
  * - Teacher Access to Submissions: A teacher is granted read and update access (for grading)
  *   to a student's submission. This is achieved by requiring a denormalized `teacherId`
@@ -32,8 +33,8 @@
  *
  * @section Denormalization for Authorization
  * To create simpler, more performant rules, we denormalize data required for authorization:
- * - Block Ownership: The `/users/{teacherId}/blocks/{blockId}` path itself establishes the
- *   teacher's ownership of all nested content, simplifying rules for assignments and quizzes.
+ * - Course/Block Ownership: The `/users/{teacherId}/...` path itself establishes the
+ *   teacher's ownership of all nested content, simplifying rules for courses, blocks, assignments and quizzes.
  * - Submission Grading: Each `/submissions/{submissionId}` document must contain a `teacherId`
  *   field. This allows the rules to grant a specific teacher access to grade a student's
  *   work without performing slow, costly, or impossible lookups on other documents.
@@ -94,6 +95,25 @@ service cloud.firestore {
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isOwner(userId) && resource != null && isImmutable('id');
       allow delete: if isOwner(userId) && resource != null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Teacher-Owned Courses (/users/{teacherId}/courses)
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Manages master course blueprints owned by a teacher.
+     * @path /users/{teacherId}/courses/{courseId}
+     * @allow A teacher (`teacher_123`) can manage course blueprints within their own user space (`/users/teacher_123/...`).
+     * @deny Any user who is not the teacher specified in the path cannot access these documents.
+     * @principle Enforces strict ownership based on the document's path.
+     */
+    match /users/{teacherId}/courses/{courseId} {
+        // TODO: Add student read access once an enrollment model is defined.
+        allow get, list: if isOwner(teacherId);
+        allow create: if isOwner(teacherId) && request.resource.data.teacherId == teacherId;
+        allow update: if isOwner(teacherId) && resource != null && isImmutable('teacherId');
+        allow delete: if isOwner(teacherId) && resource != null;
     }
 
     // -------------------------------------------------------------------------

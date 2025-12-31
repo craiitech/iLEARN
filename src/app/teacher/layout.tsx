@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Book,
   FileCheck,
@@ -6,6 +8,7 @@ import {
   MessageSquare,
   Settings,
   Library,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -21,12 +24,23 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
+import { useFirebase } from "@/firebase";
+import { useEffect } from "react";
+import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
 
 export default function TeacherLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { auth, user, isUserLoading } = useFirebase();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [auth, user, isUserLoading]);
+
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
@@ -111,7 +125,7 @@ export default function TeacherLayout({
             <SidebarTrigger />
             <div className="w-full flex-1">
             </div>
-            <UserNav />
+            {isUserLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <UserNav />}
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
           {children}

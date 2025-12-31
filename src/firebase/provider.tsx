@@ -74,7 +74,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
+    setUserAuthState({ user: auth.currentUser, isUserLoading: true, userError: null }); // Reset on auth instance change
 
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -160,7 +160,18 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
   const memoized = useMemo(factory, deps);
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
-  (memoized as MemoFirebase<T>).__memo = true;
+  if(!('__memo' in memoized)) {
+    try {
+      Object.defineProperty(memoized, '__memo', {
+        value: true,
+        enumerable: false,
+        writable: false,
+        configurable: true,
+      });
+    } catch (e) {
+      (memoized as MemoFirebase<T>).__memo = true;
+    }
+  }
   
   return memoized;
 }
