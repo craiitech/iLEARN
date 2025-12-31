@@ -28,13 +28,8 @@ export default function CourseDetailPage() {
 
     const { data: course, isLoading } = useDoc(courseRef);
 
-    // Mock learning path for now
-    const learningPath: {id: string, type: 'Lesson' | 'Quiz' | 'Assignment', title: string}[] = course ? [
-        { id: "item-1", type: "Lesson", title: "Introduction to Argumentative Writing" },
-        { id: "item-2", type: "Lesson", title: "Crafting a Strong Thesis Statement" },
-        { id: "item-3", type: "Quiz", title: "Thesis Statement Check" },
-        { id: "item-4", type: "Assignment", title: "Outline for Argumentative Essay" },
-    ] : [];
+    // Learning path will be fetched from Firestore in a future step.
+    const learningPath: {id: string, type: 'Lesson' | 'Quiz' | 'Assignment', title: string}[] = [];
 
 
     if (isLoading) {
