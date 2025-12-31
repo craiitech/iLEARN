@@ -122,9 +122,10 @@ export function QuizCreator({ courseId, course }: QuizCreatorProps) {
       const quizzesCollection = collection(firestore, `users/${user.uid}/courses/${courseId}/quizzes`);
       const pointsPossible = generatedQuiz.questions.length * 10; // Assuming 10 points per question
 
-      await addDocumentNonBlocking(quizzesCollection, {
+      const newQuizRef = await addDocumentNonBlocking(quizzesCollection, {
         title: quizTitle,
         courseId,
+        teacherId: user.uid,
         gradingPeriod,
         questions: generatedQuiz.questions,
         pointsPossible,
@@ -135,8 +136,12 @@ export function QuizCreator({ courseId, course }: QuizCreatorProps) {
         title: "Quiz Saved!",
         description: `"${quizTitle}" has been added to the course.`,
       });
-
-      router.push(`/teacher/courses/${courseId}`);
+      
+      if(newQuizRef) {
+        router.push(`/teacher/quizzes/${newQuizRef.id}/edit?courseId=${courseId}`);
+      } else {
+        router.push(`/teacher/courses/${courseId}`);
+      }
 
     } catch (error) {
       console.error("Error saving quiz:", error);
@@ -310,7 +315,7 @@ export function QuizCreator({ courseId, course }: QuizCreatorProps) {
                 <Button variant="outline" onClick={() => setGeneratedQuiz(null)}>Discard</Button>
                 <Button onClick={onSave} disabled={!courseId || isSaving}>
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-                  Save to Course
+                  Save and Edit
                 </Button>
             </div>
             {!courseId && (
@@ -324,5 +329,3 @@ export function QuizCreator({ courseId, course }: QuizCreatorProps) {
     </div>
   );
 }
-
-    

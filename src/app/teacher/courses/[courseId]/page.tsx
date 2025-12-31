@@ -49,6 +49,22 @@ type LearningPathItem = {
     gradingPeriod: string;
 }
 
+function getEditUrl(courseId: string, item: LearningPathItem) {
+    switch (item.type) {
+        case 'Lesson':
+            return `/teacher/courses/${courseId}/lessons/${item.id}/edit`;
+        case 'Quiz':
+            return `/teacher/quizzes/${item.id}/edit?courseId=${courseId}`;
+        case 'Assignment':
+        case 'Activity':
+        case 'Exercise':
+        case 'Lab Activity':
+            return `/teacher/courses/${courseId}/assignments/${item.id}/edit?type=${item.type}`;
+        default:
+            return '#';
+    }
+}
+
 export default function CourseDetailPage() {
     const { firestore, user } = useFirebase();
     const params = useParams();
@@ -265,9 +281,11 @@ export default function CourseDetailPage() {
                                                               <span className="flex-grow font-medium">{item.title}</span>
                                                               <span className="text-sm text-muted-foreground">{item.type}</span>
                                                               <div className="flex items-center gap-2">
-                                                                  <Button variant="ghost" size="icon">
-                                                                      <Pencil className="h-4 w-4" />
-                                                                      <span className="sr-only">Edit</span>
+                                                                  <Button variant="ghost" size="icon" asChild>
+                                                                    <Link href={getEditUrl(courseId, item)}>
+                                                                        <Pencil className="h-4 w-4" />
+                                                                        <span className="sr-only">Edit</span>
+                                                                    </Link>
                                                                   </Button>
                                                                   <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                                                                       <Trash2 className="h-4 w-4" />
@@ -315,5 +333,3 @@ export default function CourseDetailPage() {
         </div>
     );
 }
-
-    
