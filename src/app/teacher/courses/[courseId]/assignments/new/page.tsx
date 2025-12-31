@@ -238,8 +238,11 @@ function NewAssignmentPageContent() {
                                     <FormItem>
                                         <FormLabel>Description</FormLabel>
                                         <FormControl>
-                                        <Input placeholder="Description of the criterion" {...field} />
+                                        <Textarea placeholder="Description of the criterion and performance levels." {...field} />
                                         </FormControl>
+                                        <FormDescription>
+                                            You can use markdown to define different point levels.
+                                        </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                     )}
@@ -397,3 +400,5 @@ export default function NewAssignmentPage() {
         </Suspense>
     )
 }
+
+    
