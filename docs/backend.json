@@ -107,7 +107,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Assignment",
       "type": "object",
-      "description": "Represents an assignment within a block.",
+      "description": "Represents a generic assignment, activity, or exercise within a course.",
       "properties": {
         "id": {
           "type": "string",
@@ -128,9 +128,14 @@
         "pointsPossible": {
           "type": "number",
           "description": "Maximum points possible for assignment"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of assignment.",
+          "enum": ["Assignment", "Activity", "Exercise", "Lab Activity"]
         }
       },
-      "required": ["id", "courseId", "title", "description", "pointsPossible"]
+      "required": ["id", "courseId", "title", "description", "pointsPossible", "type"]
     },
     "Quiz": {
       "$schema": "http://json-schema.org/draft-07/schema#",

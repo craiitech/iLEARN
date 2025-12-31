@@ -21,6 +21,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { GradingPolicyEditor } from "@/components/course/grading-policy-editor";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 const typeIcons = {
@@ -88,6 +95,7 @@ export default function CourseDetailPage() {
     }, [lessons, assignments, quizzes]);
 
     const isPathLoading = areLessonsLoading || areAssignmentsLoading || areQuizzesLoading;
+    const isLabCourse = course?.courseType === 'laboratory' || course?.courseType === 'lec_lab';
 
 
     if (isCourseLoading) {
@@ -181,27 +189,35 @@ export default function CourseDetailPage() {
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
                                 <CardTitle>Master Learning Path</CardTitle>
-                                <CardDescription>Drag and drop to reorder items for all blocks of this course.</CardDescription>
+                                <CardDescription>Add and arrange items for all blocks of this course.</CardDescription>
                             </div>
                             <div className="flex gap-2">
-                                <Button asChild variant="outline">
-                                    <Link href={`/teacher/courses/${courseId}/lessons/new`}>
-                                        <PlusCircle className="mr-2 h-4 w-4"/>
-                                        Add Lesson
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="outline">
-                                    <Link href={`/teacher/courses/${courseId}/assignments/new`}>
-                                        <PlusCircle className="mr-2 h-4 w-4"/>
-                                        Add Assignment
-                                    </Link>
-                                </Button>
-                                 <Button asChild variant="outline">
-                                    <Link href={`/teacher/quizzes/new?courseId=${courseId}`}>
-                                        <PlusCircle className="mr-2 h-4 w-4"/>
-                                        Add Quiz
-                                    </Link>
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button>
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Add Item
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/teacher/courses/${courseId}/lessons/new`}>Lesson</Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/teacher/quizzes/new?courseId=${courseId}`}>Quiz</Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/teacher/courses/${courseId}/assignments/new?type=Activity`}>Activity</Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                             <Link href={`/teacher/courses/${courseId}/assignments/new?type=Exercise`}>Exercise</Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild disabled={!isLabCourse}>
+                                            <Link href={`/teacher/courses/${courseId}/assignments/new?type=Lab%20Activity`}>Lab Activity</Link>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </CardHeader>
                         <CardContent>

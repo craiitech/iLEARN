@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -20,11 +21,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useFirebase } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection } from "firebase/firestore";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
@@ -32,11 +33,14 @@ const formSchema = z.object({
   pointsPossible: z.coerce.number().min(0, "Points must be a positive number.").default(10),
 });
 
-export default function NewAssignmentPage() {
+function NewAssignmentPageContent() {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const courseId = params.courseId as string;
+  const type = searchParams.get('type') || "Assignment";
+
   const { firestore, user } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -54,7 +58,7 @@ export default function NewAssignmentPage() {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "You must be logged in and in a course context to create an assignment.",
+            description: `You must be logged in and in a course context to create a new ${type}.`,
         });
         return;
     }
@@ -66,21 +70,22 @@ export default function NewAssignmentPage() {
             courseId: courseId,
             teacherId: user.uid,
             createdAt: new Date(),
+            type: type,
         });
         
         toast({
-            title: "Assignment Created!",
-            description: `The assignment "${values.title}" has been successfully created.`,
+            title: `${type} Created!`,
+            description: `The ${type.toLowerCase()} "${values.title}" has been successfully created.`,
         });
 
         router.push(`/teacher/courses/${courseId}`);
 
     } catch (error) {
-        console.error("Error creating assignment:", error);
+        console.error(`Error creating ${type}:`, error);
         toast({
             variant: "destructive",
             title: "Uh oh! Something went wrong.",
-            description: "Could not create the assignment. Please try again.",
+            description: `Could not create the ${type.toLowerCase()}. Please try again.`,
         });
     } finally {
         setIsSaving(false);
@@ -96,7 +101,7 @@ export default function NewAssignmentPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Create New Assignment</CardTitle>
+          <CardTitle>Create New {type}</CardTitle>
           <CardDescription>Define an activity or exercise for your students.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -107,9 +112,9 @@ export default function NewAssignmentPage() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assignment Title</FormLabel>
+                    <FormLabel>{type} Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Argumentative Essay Outline" {...field} />
+                      <Input placeholder={`e.g., Argumentative Essay Outline`} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -123,7 +128,7 @@ export default function NewAssignmentPage() {
                   <FormItem>
                     <FormLabel>Description / Instructions</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Provide instructions, requirements, and submission guidelines for this assignment." {...field} rows={8} />
+                      <Textarea placeholder={`Provide instructions, requirements, and submission guidelines for this ${type.toLowerCase()}.`} {...field} rows={8} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -150,7 +155,7 @@ export default function NewAssignmentPage() {
                 </Button>
                 <Button type="submit" disabled={isSaving}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Assignment
+                    Save {type}
                 </Button>
               </div>
             </form>
@@ -159,4 +164,12 @@ export default function NewAssignmentPage() {
       </Card>
     </>
   );
+}
+
+export default function NewAssignmentPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <NewAssignmentPageContent />
+        </Suspense>
+    )
 }
