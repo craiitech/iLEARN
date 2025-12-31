@@ -2,10 +2,10 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy } from "lucide-react";
+import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { doc, collection, query, orderBy } from "firebase/firestore";
@@ -28,25 +28,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 
 const typeIcons = {
     Lesson: <FileText className="h-5 w-5 text-muted-foreground" />,
     Quiz: <FileQuestion className="h-5 w-5 text-muted-foreground" />,
-    Assignment: <FileCheck className="h-5 w-5 text-muted-foreground" />
+    Assignment: <FileCheck className="h-5 w-5 text-muted-foreground" />,
+    Activity: <FileCheck className="h-5 w-5 text-muted-foreground" />,
+    Exercise: <FileCheck className="h-5 w-5 text-muted-foreground" />,
+    "Lab Activity": <FileCheck className="h-5 w-g text-muted-foreground" />
 }
 
 type LearningPathItem = {
     id: string;
     title: string;
     createdAt: { toDate: () => Date };
-    type: 'Lesson' | 'Quiz' | 'Assignment';
+    type: 'Lesson' | 'Quiz' | 'Assignment' | 'Activity' | 'Exercise' | 'Lab Activity';
 }
 
 export default function CourseDetailPage() {
     const { firestore, user } = useFirebase();
     const params = useParams();
     const courseId = params.courseId as string;
+    const [isPolicyCollapsed, setIsPolicyCollapsed] = useState(false);
 
     const courseRef = useMemoFirebase(() => {
         if (!user || !courseId) return null;
@@ -82,7 +87,7 @@ export default function CourseDetailPage() {
     const learningPath: LearningPathItem[] = useMemo(() => {
         const allItems = [
             ...(lessons?.map(item => ({ ...item, type: 'Lesson' as const })) || []),
-            ...(assignments?.map(item => ({ ...item, type: 'Assignment' as const })) || []),
+            ...(assignments?.map(item => ({ ...item, type: item.type as any })) || []),
             ...(quizzes?.map(item => ({ ...item, type: 'Quiz' as const })) || []),
         ];
 
@@ -259,7 +264,25 @@ export default function CourseDetailPage() {
                     </Card>
                 </div>
                 <div className="lg:col-span-1 space-y-8">
-                    {courseRef && <GradingPolicyEditor courseRef={courseRef} initialPolicy={course.gradingPolicy} />}
+                     <Collapsible open={!isPolicyCollapsed} onOpenChange={setIsPolicyCollapsed}>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-x-2">
+                                <div>
+                                    <CardTitle>Grading Policy</CardTitle>
+                                    <CardDescription>Define grading terms and their weights.</CardDescription>
+                                </div>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="w-9 p-0">
+                                        <ChevronsUpDown className="h-4 w-4" />
+                                        <span className="sr-only">Toggle</span>
+                                    </Button>
+                                </CollapsibleTrigger>
+                            </CardHeader>
+                            <CollapsibleContent>
+                                {courseRef && <GradingPolicyEditor courseRef={courseRef} initialPolicy={course.gradingPolicy} onSaveSuccess={() => setIsPolicyCollapsed(true)} />}
+                            </CollapsibleContent>
+                        </Card>
+                    </Collapsible>
                 </div>
             </div>
         </div>
