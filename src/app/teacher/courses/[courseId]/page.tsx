@@ -40,9 +40,11 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
                         <PlusCircle className="mr-2 h-4 w-4"/>
                         Add Lesson
                     </Button>
-                     <Button variant="outline">
-                        <PlusCircle className="mr-2 h-4 w-4"/>
-                        Add Quiz
+                     <Button asChild variant="outline">
+                        <Link href="/teacher/quizzes/new">
+                            <PlusCircle className="mr-2 h-4 w-4"/>
+                            Add Quiz
+                        </Link>
                     </Button>
                  </div>
             </div>
