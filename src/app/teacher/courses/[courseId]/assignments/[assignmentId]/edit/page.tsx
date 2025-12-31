@@ -108,7 +108,7 @@ function EditAssignmentPageContent() {
         closingDate: assignment.closingDate ? new Date(assignment.closingDate) : undefined,
       });
     }
-  }, [assignment]);
+  }, [assignment, form.reset]);
 
 
   const { fields: criteriaFields, append: appendCriterion, remove: removeCriterion } = useFieldArray({
@@ -489,5 +489,6 @@ export default function EditAssignmentPage() {
         </Suspense>
     )
 }
+
 
     

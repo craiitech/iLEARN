@@ -22,10 +22,10 @@ import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc } from "firebase/firestore";
-import { useState } from "react";
+import { doc, updateDoc } from "firebase/firestore";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
@@ -37,13 +37,21 @@ const formSchema = z.object({
   content: z.string().min(10, "Content must be at least 10 characters long."),
 });
 
-export default function NewLessonPage() {
+export default function EditLessonPage() {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
   const courseId = params.courseId as string;
+  const lessonId = params.lessonId as string;
   const { firestore, user } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
+
+  const lessonRef = useMemoFirebase(() => {
+    if (!user || !courseId || !lessonId) return null;
+    return doc(firestore, `users/${user.uid}/courses/${courseId}/lessons`, lessonId);
+  }, [firestore, user, courseId, lessonId]);
+
+  const { data: lesson, isLoading: isLessonLoading } = useDoc(lessonRef);
 
   const courseRef = useMemoFirebase(() => {
     if (!user || !courseId) return null;
@@ -65,42 +73,62 @@ export default function NewLessonPage() {
     },
   });
 
+  useEffect(() => {
+    if (lesson) {
+      form.reset(lesson);
+    }
+  }, [lesson, form.reset]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !user || !courseId) {
+    if (!lessonRef) {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "You must be logged in and in a course context to create a lesson.",
+            description: "Cannot update lesson. Invalid reference.",
         });
         return;
     }
     setIsSaving(true);
     try {
-        const lessonsCollection = collection(firestore, `users/${user.uid}/courses/${courseId}/lessons`);
-        await addDocumentNonBlocking(lessonsCollection, {
-            ...values,
-            courseId: courseId,
-            teacherId: user.uid,
-            createdAt: new Date(),
-        });
+        updateDocumentNonBlocking(lessonRef, values);
         
         toast({
-            title: "Lesson Created!",
-            description: `The lesson "${values.title}" has been successfully created.`,
+            title: "Lesson Updated!",
+            description: `The lesson "${values.title}" has been successfully updated.`,
         });
 
         router.push(`/teacher/courses/${courseId}`);
 
     } catch (error) {
-        console.error("Error creating lesson:", error);
+        console.error("Error updating lesson:", error);
         toast({
             variant: "destructive",
             title: "Uh oh! Something went wrong.",
-            description: "Could not create the lesson. Please try again.",
+            description: "Could not update the lesson. Please try again.",
         });
     } finally {
         setIsSaving(false);
     }
+  }
+
+  if (isLessonLoading || isCourseLoading) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
+
+  if (!lesson) {
+      return (
+          <div className="text-center">
+              <h2 className="text-xl font-semibold">Lesson not found</h2>
+              <p className="text-muted-foreground">This lesson may have been deleted.</p>
+               <Button asChild variant="outline" className="mt-4">
+                    <Link href={`/teacher/courses/${courseId}`}><ArrowLeft className="mr-2 h-4 w-4"/>Back to Course</Link>
+                </Button>
+          </div>
+      );
   }
 
   return (
@@ -112,8 +140,8 @@ export default function NewLessonPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Create New Lesson</CardTitle>
-          <CardDescription>Fill out the details for your new structured lesson.</CardDescription>
+          <CardTitle>Edit Lesson</CardTitle>
+          <CardDescription>Update the details for your structured lesson.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -239,7 +267,7 @@ export default function NewLessonPage() {
                 </Button>
                 <Button type="submit" disabled={isSaving}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Lesson
+                    Save Changes
                 </Button>
               </div>
             </form>
