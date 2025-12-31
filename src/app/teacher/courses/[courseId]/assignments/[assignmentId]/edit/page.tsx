@@ -220,7 +220,7 @@ function EditAssignmentPageContent() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Grading Period</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                         <SelectTrigger disabled={isCourseLoading || !course?.gradingPolicy}>
                                             <SelectValue placeholder="Select a term for this item" />
@@ -488,3 +488,5 @@ export default function EditAssignmentPage() {
         </Suspense>
     )
 }
+
+    
