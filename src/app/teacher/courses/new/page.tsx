@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters long."),
@@ -32,6 +33,7 @@ const formSchema = z.object({
 
 export default function NewCoursePage() {
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,11 +49,13 @@ export default function NewCoursePage() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    // In a real app, you would get an ID from the database after creation.
+    const newCourseId = "1"; // Mocking a new course ID
     toast({
       title: "Course Created!",
       description: `The course blueprint "${values.title}" has been successfully created.`,
     });
-    // Here you would typically redirect or clear the form
+    router.push(`/teacher/courses/${newCourseId}`);
   }
 
   return (
