@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,12 @@ const typeIcons = {
 
 export default function CourseDetailPage({ params }: { params: { courseId: string } }) {
     const { firestore, user } = useFirebase();
+    const { courseId } = params;
 
     const courseRef = useMemoFirebase(() => {
         if (!user) return null;
-        return doc(firestore, `users/${user.uid}/courses`, params.courseId);
-    }, [firestore, user, params.courseId]);
+        return doc(firestore, `users/${user.uid}/courses`, courseId);
+    }, [firestore, user, courseId]);
 
     const { data: course, isLoading } = useDoc(courseRef);
 
