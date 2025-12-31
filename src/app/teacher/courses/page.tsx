@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Users, BookOpen, Settings } from "lucide-react";
+import { PlusCircle, BookOpen, Settings, Library } from "lucide-react";
 import Link from "next/link";
 
 const courses = [
-    { id: "1", title: 'English Composition 101', description: 'Focuses on foundational writing skills.', students: 25, code: 'ENG101-FA24' },
-    { id: "2", title: 'Introduction to Biology', description: 'Exploring the wonders of life sciences.', students: 32, code: 'BIO205-FA24' },
-    { id: "3", title: 'American History: 1865-Present', description: 'A survey of modern American history.', students: 18, code: 'HIST310-FA24' },
-    { id: "4", title: 'Calculus I', description: 'Limits, derivatives, and integrals.', students: 22, code: 'MATH210-FA24' },
+    { id: "1", title: 'English Composition 101', description: 'Focuses on foundational writing skills and argumentative essays.' },
+    { id: "2", title: 'Introduction to Biology', description: 'Exploring the core concepts of life sciences, from cells to ecosystems.' },
+    { id: "3", title: 'American History: 1865-Present', description: 'A survey of modern American history, politics, and culture.' },
+    { id: "4", title: 'Calculus I', description: 'An introduction to differential and integral calculus, including limits, derivatives, and integrals.' },
 ];
 
 export default function CoursesPage() {
@@ -19,24 +19,21 @@ export default function CoursesPage() {
                     <Link href="/teacher/courses/new"><PlusCircle /> Create New Course</Link>
                 </Button>
             </div>
+            <p className="text-muted-foreground mb-6">These are your master course blueprints. From here, you can manage the curriculum (lessons, quizzes, assignments) that will be shared across multiple blocks.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.map((course) => (
                     <Card key={course.id} className="flex flex-col">
                         <CardHeader>
-                            <CardTitle>{course.title}</CardTitle>
-                            <CardDescription>{course.description}</CardDescription>
+                            <CardTitle className="flex items-start gap-3">
+                                <Library className="h-6 w-6 mt-1 text-primary"/>
+                                <span>{course.title}</span>
+                            </CardTitle>
+                            <CardDescription className="pl-9">{course.description}</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-grow flex flex-col justify-end">
-                             <div className="flex justify-between items-center text-sm text-muted-foreground mb-4">
-                                <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4" />
-                                    <span>{course.students} Students</span>
-                                </div>
-                                <span className="font-mono text-xs bg-muted px-2 py-1 rounded-md">{course.code}</span>
-                            </div>
-                            <div className="flex gap-2 mt-auto">
+                        <CardContent className="flex flex-col justify-end flex-grow mt-4">
+                            <div className="flex gap-2">
                                 <Button variant="outline" size="sm" asChild className="flex-1">
-                                    <Link href={`/teacher/courses/${course.id}`}><BookOpen className="mr-2 h-4 w-4"/>View</Link>
+                                    <Link href={`/teacher/courses/${course.id}`}><BookOpen className="mr-2 h-4 w-4"/>Manage Curriculum</Link>
                                 </Button>
                                 <Button variant="ghost" size="icon">
                                     <Settings className="h-5 w-5" />

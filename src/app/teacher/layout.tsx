@@ -5,6 +5,7 @@ import {
   Home,
   MessageSquare,
   Settings,
+  Library,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -54,11 +55,19 @@ export default function TeacherLayout({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/teacher/courses" asChild tooltip="Courses" isActive>
+             <SidebarMenuItem>
+              <SidebarMenuButton href="/teacher/courses" asChild tooltip="Courses" >
                 <Link href="/teacher/courses">
-                  <Book />
+                  <Library />
                   <span>Courses</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/teacher/blocks" asChild tooltip="Blocks" isActive>
+                <Link href="/teacher/blocks">
+                  <Book />
+                  <span>Blocks</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

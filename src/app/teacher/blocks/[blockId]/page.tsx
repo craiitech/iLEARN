@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle } from "lucide-react";
@@ -88,5 +87,3 @@ export default function BlockDetailPage({ params }: { params: { blockId: string 
 
 // In a real app, you would need to import FileCheck from lucide-react
 import { FileCheck } from "lucide-react";
-
-    

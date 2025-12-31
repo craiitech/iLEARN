@@ -11,7 +11,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,7 +22,6 @@ import { ArrowLeft } from "lucide-react";
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters long."),
   description: z.string().optional(),
-  code: z.string().min(3, "Course code must be at least 3 characters.").max(12, "Course code cannot exceed 12 characters."),
 });
 
 export default function NewCoursePage() {
@@ -34,7 +32,6 @@ export default function NewCoursePage() {
     defaultValues: {
       title: "",
       description: "",
-      code: "",
     },
   });
 
@@ -42,7 +39,7 @@ export default function NewCoursePage() {
     console.log(values);
     toast({
       title: "Course Created!",
-      description: `The course "${values.title}" has been successfully created.`,
+      description: `The course blueprint "${values.title}" has been successfully created.`,
     });
     // Here you would typically redirect or clear the form
   }
@@ -56,8 +53,8 @@ export default function NewCoursePage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Create New Course</CardTitle>
-          <CardDescription>Fill out the details for your new course.</CardDescription>
+          <CardTitle>Create New Course Blueprint</CardTitle>
+          <CardDescription>Define the curriculum for a new course. This will serve as the master template for one or more blocks.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -82,24 +79,8 @@ export default function NewCoursePage() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="A brief description of the course and its learning objectives." {...field} />
+                      <Textarea placeholder="A brief description of the course and its overarching learning objectives." {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Course Code</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., APLIT-S24" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      A unique code students will use to join.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -108,7 +89,7 @@ export default function NewCoursePage() {
                 <Button type="button" variant="outline" asChild>
                     <Link href="/teacher/courses">Cancel</Link>
                 </Button>
-                <Button type="submit">Create Course</Button>
+                <Button type="submit">Create Course Blueprint</Button>
               </div>
             </form>
           </Form>

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle } from "lucide-react";
@@ -34,7 +33,7 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
                         <Link href="/teacher/courses"><ArrowLeft className="mr-2 h-4 w-4"/>Back to All Courses</Link>
                     </Button>
                     <h1 className="text-3xl font-headline font-bold">{title}</h1>
-                    <p className="text-muted-foreground">Arrange lessons, quizzes, and assignments for your students to complete in order.</p>
+                    <p className="text-muted-foreground">Manage the master curriculum. Arrange lessons, quizzes, and assignments that will be used by all blocks of this course.</p>
                 </div>
                  <div className="flex gap-2">
                     <Button variant="outline">
@@ -50,8 +49,8 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Learning Path</CardTitle>
-                    <CardDescription>Drag and drop to reorder items.</CardDescription>
+                    <CardTitle>Master Learning Path</CardTitle>
+                    <CardDescription>Drag and drop to reorder items for all blocks of this course.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flow-root">
