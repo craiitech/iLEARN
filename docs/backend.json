@@ -66,14 +66,43 @@
           "description": "The ID of the teacher who owns this course blueprint."
         },
         "gradingPolicy": {
+          "type": "array",
+          "description": "An array of grading periods (e.g., Midterm, Finals).",
+          "items": {
             "type": "object",
-            "description": "Defines the weighting for different assessment types.",
             "properties": {
-                "assignments": { "type": "number", "description": "Percentage weight for assignments." },
-                "quizzes": { "type": "number", "description": "Percentage weight for quizzes." },
-                "activities": { "type": "number", "description": "Percentage weight for other activities or exercises." },
-                "participation": { "type": "number", "description": "Percentage weight for participation." }
+              "term": {
+                "type": "string",
+                "description": "Name of the grading period (e.g., 'Midterm')."
+              },
+              "weight": {
+                "type": "number",
+                "description": "The overall weight of this term in the final grade (e.g., 50 for 50%)."
+              },
+              "components": {
+                "type": "object",
+                "description": "Defines the weighting for different assessment types within this term.",
+                "properties": {
+                  "assignments": {
+                    "type": "number",
+                    "description": "Percentage weight for assignments."
+                  },
+                  "quizzes": {
+                    "type": "number",
+                    "description": "Percentage weight for quizzes."
+                  },
+                  "activities": {
+                    "type": "number",
+                    "description": "Percentage weight for other activities or exercises."
+                  },
+                  "participation": {
+                    "type": "number",
+                    "description": "Percentage weight for participation."
+                  }
+                }
+              }
             }
+          }
         }
       },
       "required": ["id", "title", "courseCode", "units", "courseType", "syllabusLink", "teacherId"]
