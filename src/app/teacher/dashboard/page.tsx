@@ -8,7 +8,7 @@ export default function TeacherDashboard() {
   return (
     <>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold font-headline md:text-3xl">Command Center</h1>
+        <h1 className="text-2xl font-semibold font-headline md:text-3xl">Home</h1>
         <div className="flex gap-2">
             <Button asChild>
                 <Link href="/teacher/quizzes/new"><PlusCircle /> Create Quiz</Link>

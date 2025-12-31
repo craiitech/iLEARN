@@ -2,7 +2,7 @@ import {
   BookOpen,
   Calendar,
   GraduationCap,
-  LayoutDashboard,
+  Home,
   Settings,
 } from "lucide-react";
 import Link from "next/link";
@@ -46,11 +46,11 @@ export default function StudentLayout({
                 href="/student/dashboard"
                 asChild
                 isActive
-                tooltip="Dashboard"
+                tooltip="Home"
               >
                 <Link href="/student/dashboard">
-                  <LayoutDashboard />
-                  <span>Dashboard</span>
+                  <Home />
+                  <span>Home</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

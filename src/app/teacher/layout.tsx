@@ -2,7 +2,7 @@ import {
   Book,
   FileCheck,
   GraduationCap,
-  LayoutDashboard,
+  Home,
   MessageSquare,
   Settings,
 } from "lucide-react";
@@ -47,11 +47,11 @@ export default function TeacherLayout({
                 href="/teacher/dashboard"
                 asChild
                 isActive
-                tooltip="Dashboard"
+                tooltip="Home"
               >
                 <Link href="/teacher/dashboard">
-                  <LayoutDashboard />
-                  <span>Dashboard</span>
+                  <Home />
+                  <span>Home</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
