@@ -27,7 +27,7 @@ const mockCommentBank = [
 
 
 // This would fetch real data based on params.submissionId
-export default async function GradingSubmissionPage({ params }: { submissionId: string }) {
+export default async function GradingSubmissionPage({ params }: { params: { submissionId: string } }) {
     return (
         <div className="-m-4 lg:-m-6">
             <SpeedGraderView 
