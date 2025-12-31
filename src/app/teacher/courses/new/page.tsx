@@ -19,11 +19,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters long."),
   description: z.string().optional(),
   syllabusLink: z.string().url({ message: "Please enter a valid URL." }).min(1, "Syllabus link is required."),
+  courseCode: z.string().min(3, "Course code must be at least 3 characters."),
+  units: z.coerce.number().min(1, "Must be at least 1 unit.").max(5, "Cannot exceed 5 units."),
+  courseType: z.enum(["lecture", "laboratory", "lec_lab"]),
 });
 
 export default function NewCoursePage() {
@@ -35,6 +39,9 @@ export default function NewCoursePage() {
       title: "",
       description: "",
       syllabusLink: "",
+      courseCode: "",
+      units: 3,
+      courseType: "lecture",
     },
   });
 
@@ -75,6 +82,57 @@ export default function NewCoursePage() {
                   </FormItem>
                 )}
               />
+               <FormField
+                control={form.control}
+                name="courseCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Course Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., APLIT-101" {...field} />
+                    </FormControl>
+                    <FormDescription>A unique code for the entire course (not the block).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="units"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Units</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" max="5" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="courseType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Course Type</FormLabel>
+                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a course type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="lecture">Lecture</SelectItem>
+                              <SelectItem value="laboratory">Laboratory</SelectItem>
+                              <SelectItem value="lec_lab">Lecture & Lab</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
               <FormField
                 control={form.control}
                 name="description"
