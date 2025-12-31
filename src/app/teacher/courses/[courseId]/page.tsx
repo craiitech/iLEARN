@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle } from "lucide-react";
+import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 // Mock data for a single course's content
 const courseDetails = {
     id: "1",
     title: "English Composition 101",
+    syllabusLink: "https://docs.google.com/document/d/1V3t5tB8F9n5qV6F8d7s6g5f4h3j2k1l0p9o8i7u6y5/edit?usp=sharing",
     learningPath: [
         { id: "item-1", type: "Lesson", title: "Introduction to Argumentative Writing" },
         { id: "item-2", type: "Lesson", title: "Crafting a Strong Thesis Statement" },
@@ -23,7 +24,7 @@ const typeIcons = {
 
 export default function CourseDetailPage({ params }: { params: { courseId: string } }) {
     // In a real app, you'd fetch courseDetails based on params.courseId
-    const { title, learningPath } = courseDetails;
+    const { title, learningPath, syllabusLink } = courseDetails;
 
     return (
         <div className="container mx-auto p-0">
@@ -35,7 +36,13 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
                     <h1 className="text-3xl font-headline font-bold">{title}</h1>
                     <p className="text-muted-foreground">Manage the master curriculum. Arrange lessons, quizzes, and assignments that will be used by all blocks of this course.</p>
                 </div>
-                 <div className="flex gap-2">
+                 <div className="flex items-center gap-2">
+                     <Button asChild variant="secondary">
+                        <Link href={syllabusLink} target="_blank">
+                            <ExternalLink className="mr-2 h-4 w-4"/>
+                            View Syllabus
+                        </Link>
+                    </Button>
                     <Button variant="outline">
                         <PlusCircle className="mr-2 h-4 w-4"/>
                         Add Lesson

@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +23,7 @@ import { ArrowLeft } from "lucide-react";
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters long."),
   description: z.string().optional(),
+  syllabusLink: z.string().url({ message: "Please enter a valid URL." }).min(1, "Syllabus link is required."),
 });
 
 export default function NewCoursePage() {
@@ -32,6 +34,7 @@ export default function NewCoursePage() {
     defaultValues: {
       title: "",
       description: "",
+      syllabusLink: "",
     },
   });
 
@@ -81,6 +84,22 @@ export default function NewCoursePage() {
                     <FormControl>
                       <Textarea placeholder="A brief description of the course and its overarching learning objectives." {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="syllabusLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Syllabus Link</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://docs.google.com/document/d/..." {...field} />
+                    </FormControl>
+                     <FormDescription>
+                      Paste the shareable Google Drive link to the approved syllabus.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

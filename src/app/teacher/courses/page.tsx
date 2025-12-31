@@ -4,10 +4,10 @@ import { PlusCircle, BookOpen, Settings, Library } from "lucide-react";
 import Link from "next/link";
 
 const courses = [
-    { id: "1", title: 'English Composition 101', description: 'Focuses on foundational writing skills and argumentative essays.' },
-    { id: "2", title: 'Introduction to Biology', description: 'Exploring the core concepts of life sciences, from cells to ecosystems.' },
-    { id: "3", title: 'American History: 1865-Present', description: 'A survey of modern American history, politics, and culture.' },
-    { id: "4", title: 'Calculus I', description: 'An introduction to differential and integral calculus, including limits, derivatives, and integrals.' },
+    { id: "1", title: 'English Composition 101', description: 'Focuses on foundational writing skills and argumentative essays.', syllabusLink: 'https://docs.google.com' },
+    { id: "2", title: 'Introduction to Biology', description: 'Exploring the core concepts of life sciences, from cells to ecosystems.', syllabusLink: 'https://docs.google.com' },
+    { id: "3", title: 'American History: 1865-Present', description: 'A survey of modern American history, politics, and culture.', syllabusLink: 'https://docs.google.com' },
+    { id: "4", title: 'Calculus I', description: 'An introduction to differential and integral calculus, including limits, derivatives, and integrals.', syllabusLink: 'https://docs.google.com' },
 ];
 
 export default function CoursesPage() {
