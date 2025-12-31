@@ -19,6 +19,18 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
     const [minute, setMinute] = useState<number | undefined>(date?.getMinutes());
     const [amPm, setAmPm] = useState<string | undefined>(date && date.getHours() >= 12 ? "pm" : "am");
 
+     useEffect(() => {
+        // Sync internal state with external prop change
+        setYear(date?.getFullYear());
+        setMonth(date?.getMonth());
+        setDay(date?.getDate());
+        const dateHour = date ? date.getHours() : undefined;
+        setHour(dateHour !== undefined ? dateHour % 12 || 12 : undefined);
+        setMinute(date?.getMinutes());
+        setAmPm(dateHour !== undefined && dateHour >= 12 ? "pm" : "am");
+    }, [date]);
+
+
     useEffect(() => {
         if (year !== undefined && month !== undefined && day !== undefined && hour !== undefined && minute !== undefined && amPm !== undefined) {
             let fullHour = hour;
@@ -28,11 +40,16 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
                 fullHour = 0;
             }
             const newDate = new Date(year, month, day, fullHour, minute);
-            setDate(newDate);
-        } else {
+
+            // Prevent infinite loop by checking if date is different
+            if (date?.getTime() !== newDate.getTime()) {
+                setDate(newDate);
+            }
+        } else if (date !== undefined) {
+            // If date is defined but internal state is not, clear external state
             setDate(undefined);
         }
-    }, [year, month, day, hour, minute, amPm, setDate]);
+    }, [year, month, day, hour, minute, amPm, setDate, date]);
 
     const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i);
     const months = Array.from({ length: 12 }, (_, i) => ({
@@ -105,7 +122,19 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
             {/* Minute */}
              <Select
                 value={minute?.toString()}
-                onValueChange={(value) => setMinute(parseInt(value))}
+                onValueChange={(value) => {
+                    const newMinute = parseInt(value);
+                    setMinute(newMinute);
+                    if (day !== undefined && year !== undefined && month !== undefined && hour !== undefined && amPm !== undefined) {
+                         let fullHour = hour;
+                        if (amPm === "pm" && hour < 12) {
+                            fullHour = hour + 12;
+                        } else if (amPm === "am" && hour === 12) {
+                            fullHour = 0;
+                        }
+                        setDate(new Date(year, month, day, fullHour, newMinute));
+                    }
+                }}
                 disabled={disabled}
             >
                 <SelectTrigger>
@@ -129,4 +158,3 @@ export function DateTimePicker({ date, setDate, disabled }: DateTimePickerProps)
         </div>
     );
 }
-
