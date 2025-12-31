@@ -191,20 +191,37 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "criterion": {
+                    "criterionTitle": {
                         "type": "string",
                         "description": "The name of the rubric criterion (e.g., 'Clarity')."
                     },
-                    "description": {
+                    "criterionDescription": {
                         "type": "string",
                         "description": "A detailed description of the criterion."
                     },
-                    "points": {
-                        "type": "number",
-                        "description": "The points allocated to this criterion."
+                    "levels": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "levelTitle": {
+                                    "type": "string",
+                                    "description": "The title of the performance level (e.g., 'Excellent')."
+                                },
+                                "levelDescription": {
+                                    "type": "string",
+                                    "description": "A description of what this performance level entails."
+                                },
+                                "points": {
+                                    "type": "number",
+                                    "description": "The points awarded for this level."
+                                }
+                            },
+                            "required": ["points", "levelTitle"]
+                        }
                     }
                 },
-                "required": ["criterion", "points"]
+                "required": ["criterionTitle", "levels"]
             }
         }
       },
