@@ -24,42 +24,73 @@
           "description": "User's role (e.g., Teacher, Student)."
         }
       },
-      "required": [
-        "id",
-        "email",
-        "displayName",
-        "role"
-      ]
+      "required": ["id", "email", "displayName", "role"]
+    },
+    "Course": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Course",
+      "type": "object",
+      "description": "Represents a master course blueprint.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Course entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the course."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the course."
+        },
+        "courseCode": {
+          "type": "string",
+          "description": "A unique code for the course (e.g., APLIT-101)."
+        },
+        "units": {
+          "type": "number",
+          "description": "Number of academic units."
+        },
+        "courseType": {
+          "type": "string",
+          "enum": ["lecture", "laboratory", "lec_lab"]
+        },
+        "syllabusLink": {
+          "type": "string",
+          "format": "uri"
+        },
+        "teacherId": {
+          "type": "string",
+          "description": "The ID of the teacher who owns this course blueprint."
+        }
+      },
+      "required": ["id", "title", "courseCode", "units", "courseType", "syllabusLink", "teacherId"]
     },
     "Block": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Block",
       "type": "object",
-      "description": "Represents a class block within the LMS.",
+      "description": "Represents a specific instance or section of a course.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Block entity."
         },
-        "name": {
+        "courseId": {
           "type": "string",
-          "description": "Name of the block."
+          "description": "Reference to the master Course blueprint."
         },
-        "description": {
+        "blockCode": {
           "type": "string",
-          "description": "Description of the block."
+          "description": "Unique code for students to join this specific block (e.g., APLIT-101-S1)."
         },
-        "teacherId": {
+        "schedule": {
           "type": "string",
-          "description": "Reference to User (Teacher). (Relationship: User 1:N Block)"
+          "description": "The schedule for this block (e.g., 'MWF 10-11am')."
         }
       },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "teacherId"
-      ]
+      "required": ["id", "courseId", "blockCode", "schedule"]
     },
     "Assignment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -71,9 +102,9 @@
           "type": "string",
           "description": "Unique identifier for the Assignment entity."
         },
-        "blockId": {
+        "courseId": {
           "type": "string",
-          "description": "Reference to Block. (Relationship: Block 1:N Assignment)"
+          "description": "Reference to Course."
         },
         "title": {
           "type": "string",
@@ -83,38 +114,26 @@
           "type": "string",
           "description": "Description of the assignment."
         },
-        "dueDate": {
-          "type": "string",
-          "description": "Due date of the assignment.",
-          "format": "date-time"
-        },
         "pointsPossible": {
           "type": "number",
           "description": "Maximum points possible for assignment"
         }
       },
-      "required": [
-        "id",
-        "blockId",
-        "title",
-        "description",
-        "dueDate",
-        "pointsPossible"
-      ]
+      "required": ["id", "courseId", "title", "description", "pointsPossible"]
     },
     "Quiz": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Quiz",
       "type": "object",
-      "description": "Represents a quiz within a block.",
+      "description": "Represents a quiz within a course.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Quiz entity."
         },
-        "blockId": {
+        "courseId": {
           "type": "string",
-          "description": "Reference to Block. (Relationship: Block 1:N Quiz)"
+          "description": "Reference to Course."
         },
         "title": {
           "type": "string",
@@ -124,32 +143,19 @@
           "type": "string",
           "description": "Description of the quiz."
         },
-        "dueDate": {
-          "type": "string",
-          "description": "Due date of the quiz.",
-          "format": "date-time"
-        },
         "questions": {
           "type": "array",
-          "description": "Array of question IDs that belong to this quiz. (Relationship: Quiz 1:N Question)",
+          "description": "Array of question objects that belong to this quiz.",
           "items": {
-            "type": "string"
+            "$ref": "#/entities/Question"
           }
         },
         "pointsPossible": {
           "type": "number",
-          "description": "Maximum points possible for assignment"
+          "description": "Maximum points possible for quiz."
         }
       },
-      "required": [
-        "id",
-        "blockId",
-        "title",
-        "description",
-        "dueDate",
-        "questions",
-        "pointsPossible"
-      ]
+      "required": ["id", "courseId", "title", "questions", "pointsPossible"]
     },
     "Question": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -157,14 +163,6 @@
       "type": "object",
       "description": "Represents a question within a quiz.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Question entity."
-        },
-        "quizId": {
-          "type": "string",
-          "description": "Reference to Quiz. (Relationship: Quiz 1:N Question)"
-        },
         "text": {
           "type": "string",
           "description": "Text of the question."
@@ -189,14 +187,7 @@
           "description": "Points possible for question"
         }
       },
-      "required": [
-        "id",
-        "quizId",
-        "text",
-        "type",
-        "correctAnswer",
-        "pointsPossible"
-      ]
+      "required": ["text", "type", "correctAnswer", "pointsPossible"]
     },
     "Submission": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -210,15 +201,21 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to User (Student). (Relationship: User 1:N Submission)"
+          "description": "Reference to User (Student)."
+        },
+        "courseId": {
+          "type": "string"
+        },
+        "blockId": {
+          "type": "string"
         },
         "assignmentId": {
           "type": "string",
-          "description": "Reference to Assignment. (Relationship: Assignment 1:N Submission)"
+          "description": "Reference to Assignment."
         },
         "quizId": {
           "type": "string",
-          "description": "Reference to Quiz. (Relationship: Quiz 1:N Submission)"
+          "description": "Reference to Quiz."
         },
         "submissionTime": {
           "type": "string",
@@ -239,11 +236,7 @@
           "description": "Feedback provided by the teacher."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "submissionTime"
-      ]
+      "required": ["id", "userId", "submissionTime"]
     }
   },
   "auth": {
@@ -259,118 +252,61 @@
         "definition": {
           "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/entities/User"
           },
-          "description": "Stores user profiles. User can only read/write their own profile. Includes standard user profile information.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
+          "description": "Stores user profiles."
         }
       },
       {
-        "path": "/users/{userId}/blocks/{blockId}",
+        "path": "/courses/{courseId}",
+        "definition": {
+          "entityName": "Course",
+          "schema": {
+            "$ref": "#/entities/Course"
+          },
+          "description": "Stores master course blueprints owned by teachers."
+        }
+      },
+      {
+        "path": "/courses/{courseId}/blocks/{blockId}",
         "definition": {
           "entityName": "Block",
           "schema": {
-            "$ref": "#/backend/entities/Block"
+            "$ref": "#/entities/Block"
           },
-          "description": "Stores blocks created by a specific teacher. Includes denormalized 'teacherId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the teacher (user)."
-            },
-            {
-              "name": "blockId",
-              "description": "The unique identifier of the block."
-            }
-          ]
+          "description": "Stores specific sections/blocks of a course."
         }
       },
       {
-        "path": "/blocks/{blockId}/assignments/{assignmentId}",
+        "path": "/courses/{courseId}/assignments/{assignmentId}",
         "definition": {
           "entityName": "Assignment",
           "schema": {
-            "$ref": "#/backend/entities/Assignment"
+            "$ref": "#/entities/Assignment"
           },
-          "description": "Stores assignments belonging to a specific block.",
-          "params": [
-            {
-              "name": "blockId",
-              "description": "The unique identifier of the block."
-            },
-            {
-              "name": "assignmentId",
-              "description": "The unique identifier of the assignment."
-            }
-          ]
+          "description": "Stores assignment templates for a course."
         }
       },
       {
-        "path": "/blocks/{blockId}/quizzes/{quizId}",
+        "path": "/courses/{courseId}/quizzes/{quizId}",
         "definition": {
           "entityName": "Quiz",
           "schema": {
-            "$ref": "#/backend/entities/Quiz"
+            "$ref": "#/entities/Quiz"
           },
-          "description": "Stores quizzes belonging to a specific block.",
-          "params": [
-            {
-              "name": "blockId",
-              "description": "The unique identifier of the block."
-            },
-            {
-              "name": "quizId",
-              "description": "The unique identifier of the quiz."
-            }
-          ]
+          "description": "Stores quiz templates for a course."
         }
       },
       {
-        "path": "/quizzes/{quizId}/questions/{questionId}",
-        "definition": {
-          "entityName": "Question",
-          "schema": {
-            "$ref": "#/backend/entities/Question"
-          },
-          "description": "Stores questions belonging to a specific quiz.",
-          "params": [
-            {
-              "name": "quizId",
-              "description": "The unique identifier of the quiz."
-            },
-            {
-              "name": "questionId",
-              "description": "The unique identifier of the question."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/submissions/{submissionId}",
+        "path": "/submissions/{submissionId}",
         "definition": {
           "entityName": "Submission",
           "schema": {
-            "$ref": "#/backend/entities/Submission"
+            "$ref": "#/entities/Submission"
           },
-          "description": "Stores submissions for assignments or quizzes made by a specific user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (student)."
-            },
-            {
-              "name": "submissionId",
-              "description": "The unique identifier of the submission."
-            }
-          ]
+          "description": "Stores submissions from students for quizzes or assignments."
         }
       }
-    ],
-    "reasoning": "The Firestore data structure is designed to support the RSU iLEARN LMS application, focusing on role-based access control, efficient data retrieval, and scalable architecture. The structure adheres to the principle of Authorization Independence by denormalizing authorization data (e.g., teacherId for Blocks) to avoid costly and restrictive `get()` calls in security rules. Path-based ownership is leveraged where applicable to simplify security rules and improve performance.\n\nThe structure is segregated to ensure that documents within a collection share the same security posture (e.g., separating user profiles from other data). User-owned data (Blocks) are nested under the user's document to ensure clear ownership and easy querying.\n\nQAPs (Rules are not Filters) are supported by leveraging structural segregation. For instance, listing blocks is restricted to teachers, and this rule is enforced at the collection level, preventing unauthorized access.\n\nThe chosen structure supports the integrity of ownership, timestamps, and denormalized data. For example, Blocks are owned by teachers, and this relationship is enforced at the data structure level through the path `/users/{userId}/blocks/{blockId}`. This structure naturally restricts data access to authorized users only.\n\n*   `/users/{userId}`: Stores user profiles. This collection is secured such that only the user or an admin can read/write their document.\n*   `/users/{userId}/blocks/{blockId}`: Stores blocks owned by a specific teacher. The `teacherId` is denormalized into each block document. This allows for efficient queries of blocks belonging to a specific teacher without needing to perform collection group queries.\n*   `/blocks/{blockId}/assignments/{assignmentId}`: Stores assignments belonging to a specific block. The structure assumes that assignments are accessible to all students enrolled in a block. If finer-grained access control is needed, the structure might require adjustments.\n*   `/blocks/{blockId}/quizzes/{quizId}`: Stores quizzes belonging to a specific block.\n*   `/quizzes/{quizId}/questions/{questionId}`: Stores questions associated with each quiz.\n*   `/users/{userId}/submissions/{submissionId}`: Stores submissions made by a student, it can be for either a quiz or an assignment. `assignmentId` and `quizId` must be stored in each submission.\n\nDenormalization is key to achieving Authorization Independence. The `teacherId` is explicitly stored in the `Block` entity, allowing security rules to validate teacher access without requiring a `get()` call to the `User` document. This ensures atomic operations are possible when creating blocks and assignments. This approach applies similarly to other relationships (e.g., assignments and submissions)."
+    ]
   }
 }
