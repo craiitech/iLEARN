@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -204,7 +205,7 @@ export default function NewCoursePage() {
                 <Button type="button" variant="outline" asChild>
                     <Link href="/teacher/courses">Cancel</Link>
                 </Button>
-                <Button type="submit" disabled={form.formState.isSubmitting || !user}>Create Course Blueprint</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting}>Create Course Blueprint</Button>
               </div>
             </form>
           </Form>
