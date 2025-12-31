@@ -41,12 +41,17 @@ export default function CourseDetailPage() {
         if(!courseRef) return null;
         return query(collection(courseRef, 'blocks'));
     }, [courseRef]);
+    
+    const lessonsQuery = useMemoFirebase(() => {
+        if (!courseRef) return null;
+        return query(collection(courseRef, 'lessons'));
+    }, [courseRef]);
 
     const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
     const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
+    const { data: lessons, isLoading: areLessonsLoading } = useCollection(lessonsQuery);
 
-    // Learning path will be fetched from Firestore in a future step.
-    const learningPath: {id: string, type: 'Lesson' | 'Quiz' | 'Assignment', title: string}[] = [];
+    const learningPath = lessons?.map(lesson => ({ ...lesson, type: 'Lesson' as const })) || [];
 
 
     if (isCourseLoading) {
@@ -157,7 +162,12 @@ export default function CourseDetailPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flow-root">
-                        {learningPath.length > 0 ? (
+                        {areLessonsLoading ? (
+                             <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
+                               <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+                               <p className="text-muted-foreground text-sm">Loading curriculum...</p>
+                           </div>
+                        ) : learningPath.length > 0 ? (
                           <ul className="space-y-3">
                               {learningPath.map((item) => (
                                   <li key={item.id} className="flex items-center gap-4 rounded-md border bg-background p-3 shadow-sm">
@@ -190,5 +200,3 @@ export default function CourseDetailPage() {
         </div>
     );
 }
-
-    
