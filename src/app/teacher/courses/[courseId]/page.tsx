@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 const typeIcons = {
@@ -45,6 +46,7 @@ type LearningPathItem = {
     title: string;
     createdAt: { toDate: () => Date };
     type: 'Lesson' | 'Quiz' | 'Assignment' | 'Activity' | 'Exercise' | 'Lab Activity';
+    gradingPeriod: string;
 }
 
 export default function CourseDetailPage() {
@@ -84,19 +86,30 @@ export default function CourseDetailPage() {
     const { data: assignments, isLoading: areAssignmentsLoading } = useCollection(assignmentsQuery);
     const { data: quizzes, isLoading: areQuizzesLoading } = useCollection(quizzesQuery);
 
-    const learningPath: LearningPathItem[] = useMemo(() => {
-        const allItems = [
+    const learningPathByTerm = useMemo(() => {
+        const allItems: LearningPathItem[] = [
             ...(lessons?.map(item => ({ ...item, type: 'Lesson' as const })) || []),
             ...(assignments?.map(item => ({ ...item, type: item.type as any })) || []),
             ...(quizzes?.map(item => ({ ...item, type: 'Quiz' as const })) || []),
         ];
 
-        // Sort by 'createdAt' timestamp
-        return allItems.sort((a, b) => {
+        // Sort by 'createdAt' timestamp first
+        const sortedItems = allItems.sort((a, b) => {
             const dateA = a.createdAt?.toDate() || new Date(0);
             const dateB = b.createdAt?.toDate() || new Date(0);
             return dateA.getTime() - dateB.getTime();
         });
+
+        // Then group by gradingPeriod
+        return sortedItems.reduce((acc, item) => {
+            const term = item.gradingPeriod || 'Uncategorized';
+            if (!acc[term]) {
+                acc[term] = [];
+            }
+            acc[term].push(item);
+            return acc;
+        }, {} as Record<string, LearningPathItem[]>);
+
     }, [lessons, assignments, quizzes]);
 
     const isPathLoading = areLessonsLoading || areAssignmentsLoading || areQuizzesLoading;
@@ -122,6 +135,10 @@ export default function CourseDetailPage() {
             </div>
         )
     }
+    
+    const orderedTerms = course?.gradingPolicy?.map((p: any) => p.term) || [];
+    const allTerms = [...orderedTerms, ...Object.keys(learningPathByTerm).filter(term => !orderedTerms.includes(term))];
+
 
     return (
         <div className="container mx-auto p-0 space-y-8">
@@ -221,45 +238,55 @@ export default function CourseDetailPage() {
                                         <DropdownMenuItem asChild disabled={!isLabCourse}>
                                             <Link href={`/teacher/courses/${courseId}/assignments/new?type=Lab%20Activity`}>Lab Activity</Link>
                                         </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                             <Link href={`/teacher/courses/${courseId}/assignments/new?type=Assignment`}>Assignment</Link>
+                                        </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="flow-root">
-                                {isPathLoading ? (
+                             {isPathLoading ? (
                                      <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
                                        <Loader2 className="h-8 w-8 animate-spin text-primary"/>
                                        <p className="text-muted-foreground text-sm">Loading curriculum...</p>
                                    </div>
-                                ) : learningPath.length > 0 ? (
-                                  <ul className="space-y-3">
-                                      {learningPath.map((item) => (
-                                          <li key={item.id} className="flex items-center gap-4 rounded-md border bg-background p-3 shadow-sm">
-                                              <GripVertical className="h-5 w-5 cursor-grab text-muted-foreground" />
-                                              {typeIcons[item.type]}
-                                              <span className="flex-grow font-medium">{item.title}</span>
-                                              <span className="text-sm text-muted-foreground">{item.type}</span>
-                                              <div className="flex items-center gap-2">
-                                                  <Button variant="ghost" size="icon">
-                                                      <Pencil className="h-4 w-4" />
-                                                      <span className="sr-only">Edit</span>
-                                                  </Button>
-                                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                      <Trash2 className="h-4 w-4" />
-                                                       <span className="sr-only">Delete</span>
-                                                  </Button>
-                                              </div>
-                                          </li>
-                                      ))}
-                                  </ul>
+                                ) : Object.keys(learningPathByTerm).length > 0 ? (
+                                    <Accordion type="multiple" className="w-full" defaultValue={allTerms}>
+                                        {allTerms.map(term => learningPathByTerm[term] && (
+                                            <AccordionItem value={term} key={term}>
+                                                <AccordionTrigger className="text-lg font-semibold">{term}</AccordionTrigger>
+                                                <AccordionContent>
+                                                    <ul className="space-y-3 pl-2 pt-2">
+                                                      {learningPathByTerm[term].map((item) => (
+                                                          <li key={item.id} className="flex items-center gap-4 rounded-md border bg-background p-3 shadow-sm">
+                                                              <GripVertical className="h-5 w-5 cursor-grab text-muted-foreground" />
+                                                              {typeIcons[item.type]}
+                                                              <span className="flex-grow font-medium">{item.title}</span>
+                                                              <span className="text-sm text-muted-foreground">{item.type}</span>
+                                                              <div className="flex items-center gap-2">
+                                                                  <Button variant="ghost" size="icon">
+                                                                      <Pencil className="h-4 w-4" />
+                                                                      <span className="sr-only">Edit</span>
+                                                                  </Button>
+                                                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                                      <Trash2 className="h-4 w-4" />
+                                                                       <span className="sr-only">Delete</span>
+                                                                  </Button>
+                                                              </div>
+                                                          </li>
+                                                      ))}
+                                                  </ul>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
                                 ) : (
                                     <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
                                        <h3 className="text-lg font-semibold">Empty Learning Path</h3>
                                        <p className="text-muted-foreground text-sm">Add lessons, quizzes, and assignments to build the curriculum.</p>
                                    </div>
                                 )}
-                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -288,3 +315,5 @@ export default function CourseDetailPage() {
         </div>
     );
 }
+
+    

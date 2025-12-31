@@ -150,6 +150,10 @@
           "type": "string",
           "description": "Reference to Course."
         },
+        "gradingPeriod": {
+          "type": "string",
+          "description": "The grading period this assignment belongs to (e.g., 'Midterm')."
+        },
         "title": {
           "type": "string",
           "description": "Title of the assignment."
@@ -240,6 +244,10 @@
         "courseId": {
           "type": "string",
           "description": "Reference to Course."
+        },
+         "gradingPeriod": {
+          "type": "string",
+          "description": "The grading period this quiz belongs to (e.g., 'Midterm')."
         },
         "title": {
           "type": "string",
@@ -358,6 +366,10 @@
           "type": "string",
           "description": "Reference to Course."
         },
+        "gradingPeriod": {
+          "type": "string",
+          "description": "The grading period this lesson belongs to (e.g., 'Midterm')."
+        },
         "title": {
           "type": "string",
           "description": "Title of the lesson."
@@ -468,3 +480,5 @@
     ]
   }
 }
+
+    

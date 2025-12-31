@@ -21,13 +21,14 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save, PlusCircle, Trash2, GripVertical } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useFirebase } from "@/firebase";
+import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import { useState, Suspense, useMemo } from "react";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const rubricLevelSchema = z.object({
     levelTitle: z.string().min(1, "Level title is required."),
@@ -47,6 +48,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   objectives: z.string().optional(),
   deliverables: z.string().optional(),
+  gradingPeriod: z.string().min(1, "You must select a grading period."),
   dueDate: z.date().optional(),
   closingDate: z.date().optional(),
   rubric: z.array(rubricCriterionSchema).default([]),
@@ -70,6 +72,13 @@ function NewAssignmentPageContent() {
 
   const { firestore, user } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
+  
+  const courseRef = useMemoFirebase(() => {
+    if (!user || !courseId) return null;
+    return doc(firestore, `users/${user.uid}/courses`, courseId);
+  }, [firestore, user, courseId]);
+
+  const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,6 +88,7 @@ function NewAssignmentPageContent() {
       objectives: "",
       deliverables: "",
       rubric: [],
+      gradingPeriod: "",
     },
   });
 
@@ -161,19 +171,46 @@ function NewAssignmentPageContent() {
                   <CardDescription>Define the details and grading criteria for this {type.toLowerCase()}.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{type} Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder={`e.g., Argumentative Essay Outline`} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{type} Title</FormLabel>
+                                <FormControl>
+                                <Input placeholder={`e.g., Argumentative Essay Outline`} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="gradingPeriod"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Grading Period</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger disabled={isCourseLoading || !course?.gradingPolicy}>
+                                            <SelectValue placeholder="Select a term for this item" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {isCourseLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                            {course?.gradingPolicy?.map((policy: any) => (
+                                                <SelectItem key={policy.term} value={policy.term}>{policy.term}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>Which grading term does this belong to?</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                  
 
                   <FormField
                     control={form.control}

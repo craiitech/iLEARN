@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -43,13 +44,15 @@ const formSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
   difficulty: z.enum(["easy", "medium", "hard"]),
   numberOfQuestions: z.number().min(1).max(10),
+  gradingPeriod: z.string().min(1, "You must select a grading period."),
 });
 
 type QuizCreatorProps = {
   courseId: string | null;
+  course: any;
 };
 
-export function QuizCreator({ courseId }: QuizCreatorProps) {
+export function QuizCreator({ courseId, course }: QuizCreatorProps) {
   const [generatedQuiz, setGeneratedQuiz] = useState<GenerateQuizQuestionsOutput | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -64,6 +67,7 @@ export function QuizCreator({ courseId }: QuizCreatorProps) {
       topic: "",
       difficulty: "medium",
       numberOfQuestions: 5,
+      gradingPeriod: "",
     },
   });
 
@@ -71,7 +75,11 @@ export function QuizCreator({ courseId }: QuizCreatorProps) {
     setIsGenerating(true);
     setGeneratedQuiz(null);
     try {
-      const result = await generateQuizQuestions(values);
+      const result = await generateQuizQuestions({
+          topic: values.topic,
+          difficulty: values.difficulty,
+          numberOfQuestions: values.numberOfQuestions
+      });
       setGeneratedQuiz(result);
       setQuizTitle(`Quiz: ${values.topic}`);
       toast({
@@ -99,6 +107,16 @@ export function QuizCreator({ courseId }: QuizCreatorProps) {
       });
       return;
     }
+    const gradingPeriod = form.getValues("gradingPeriod");
+    if (!gradingPeriod) {
+       toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Please select a grading period before saving.",
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const quizzesCollection = collection(firestore, `users/${user.uid}/courses/${courseId}/quizzes`);
@@ -107,6 +125,7 @@ export function QuizCreator({ courseId }: QuizCreatorProps) {
       await addDocumentNonBlocking(quizzesCollection, {
         title: quizTitle,
         courseId,
+        gradingPeriod,
         questions: generatedQuiz.questions,
         pointsPossible,
         createdAt: new Date(),
@@ -199,6 +218,29 @@ export function QuizCreator({ courseId }: QuizCreatorProps) {
                 />
               </div>
 
+               <FormField
+                  control={form.control}
+                  name="gradingPeriod"
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Grading Period</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                              <FormControl>
+                              <SelectTrigger disabled={!course?.gradingPolicy}>
+                                  <SelectValue placeholder="Select a term for this quiz" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {course?.gradingPolicy?.map((policy: any) => (
+                                      <SelectItem key={policy.term} value={policy.term}>{policy.term}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+              />
+
               <Button type="submit" disabled={isGenerating} size="lg">
                 {isGenerating ? (
                   <>
@@ -282,3 +324,5 @@ export function QuizCreator({ courseId }: QuizCreatorProps) {
     </div>
   );
 }
+
+    

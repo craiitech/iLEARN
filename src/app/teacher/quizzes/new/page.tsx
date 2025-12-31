@@ -1,18 +1,29 @@
 
+
 "use client";
 
 import { QuizCreator } from "@/components/quiz/quiz-creator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Lightbulb } from "lucide-react";
+import { ArrowLeft, Lightbulb, Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 function NewQuizPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const courseId = searchParams.get('courseId');
+  const { user, firestore } = useFirebase();
+
+  const courseRef = useMemoFirebase(() => {
+    if (!user || !courseId) return null;
+    return doc(firestore, `users/${user.uid}/courses`, courseId);
+  }, [firestore, user, courseId]);
+
+  const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
 
   return (
     <div>
@@ -24,7 +35,13 @@ function NewQuizPageContent() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2">
             <h1 className="text-3xl font-headline font-bold mb-6">AI Quiz Generator</h1>
-            <QuizCreator courseId={courseId} />
+            {isCourseLoading && !course ? (
+              <div className="flex items-center justify-center p-8 border rounded-lg">
+                <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+              </div>
+            ) : (
+              <QuizCreator courseId={courseId} course={course} />
+            )}
         </div>
         <div className="lg:col-span-1">
             <Card className="bg-primary/5 border-primary/20">
@@ -64,3 +81,5 @@ export default function NewQuizPage() {
     </Suspense>
   )
 }
+
+    

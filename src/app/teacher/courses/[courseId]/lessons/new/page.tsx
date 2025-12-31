@@ -21,13 +21,15 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirebase } from "@/firebase";
+import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
+  gradingPeriod: z.string().min(1, "You must select a grading period."),
   learningOutcome: z.string().min(10, "Learning outcome must be at least 10 characters long."),
   objectives: z.string().min(10, "Objectives must be at least 10 characters long."),
   sdgIntegration: z.string().optional(),
@@ -43,10 +45,18 @@ export default function NewLessonPage() {
   const { firestore, user } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
 
+  const courseRef = useMemoFirebase(() => {
+    if (!user || !courseId) return null;
+    return doc(firestore, `users/${user.uid}/courses`, courseId);
+  }, [firestore, user, courseId]);
+
+  const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      gradingPeriod: "",
       learningOutcome: "",
       objectives: "",
       sdgIntegration: "",
@@ -108,19 +118,44 @@ export default function NewLessonPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lesson Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Introduction to Photosynthesis" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lesson Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Introduction to Photosynthesis" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                        control={form.control}
+                        name="gradingPeriod"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Grading Period</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger disabled={isCourseLoading || !course?.gradingPolicy}>
+                                        <SelectValue placeholder="Select a term for this lesson" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {isCourseLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                        {course?.gradingPolicy?.map((policy: any) => (
+                                            <SelectItem key={policy.term} value={policy.term}>{policy.term}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+              </div>
 
               <FormField
                 control={form.control}
@@ -214,3 +249,5 @@ export default function NewLessonPage() {
     </>
   );
 }
+
+    
