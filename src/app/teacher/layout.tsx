@@ -17,6 +17,7 @@ import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
 
@@ -27,7 +28,8 @@ export default function TeacherLayout({
 }) {
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="icon">
+        <SidebarRail />
         <SidebarHeader>
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -98,7 +100,7 @@ export default function TeacherLayout({
       </Sidebar>
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
-            <SidebarTrigger className="flex md:hidden"/>
+            <SidebarTrigger />
             <div className="w-full flex-1">
             </div>
             <UserNav />
