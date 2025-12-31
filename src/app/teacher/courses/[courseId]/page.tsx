@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy } from "lucide-react";
@@ -239,4 +240,5 @@ export default function CourseDetailPage() {
             </Card>
         </div>
     );
-}
+
+    
