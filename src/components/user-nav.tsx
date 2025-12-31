@@ -11,34 +11,56 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, User } from "lucide-react";
-import Link from "next/link";
+import { useFirebase } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { signOut } from "firebase/auth";
+import { LogOut, Settings, User as UserIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-// NOTE: In a real app, you'd get user data from an auth context.
-// For this example, we are mocking a teacher and a student view.
-// This component is used in both layouts, so we'll show a generic user.
-const user = {
-    name: "Alex Doe",
-    email: "alex.doe@school.edu",
-    avatar: "https://picsum.photos/seed/user/40/40",
-    fallback: "AD"
-}
 
 export function UserNav() {
+  const { auth, user } = useFirebase();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/teacher/login');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "Could not log you out. Please try again.",
+      });
+    }
+  };
+
+  if (!user) {
+    return null; // Don't render the nav if there is no user
+  }
+
+  const userFallback = user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || "U";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user.avatar} alt={`@${user.name}`} data-ai-hint="person" />
-            <AvatarFallback>{user.fallback}</AvatarFallback>
+            {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || user.email || 'user avatar'} data-ai-hint="person" />}
+            <AvatarFallback>{userFallback}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-sm font-medium leading-none">{user.displayName || "Teacher"}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
@@ -47,7 +69,7 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
+            <UserIcon className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </DropdownMenuItem>
           <DropdownMenuItem>
@@ -56,11 +78,9 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/">
+        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
-          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
