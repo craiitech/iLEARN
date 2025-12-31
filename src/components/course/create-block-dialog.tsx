@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -122,8 +123,11 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
                   <FormItem>
                     <FormLabel>Schedule</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., MWF 10:00 AM - 11:00 AM" {...field} />
+                      <Textarea placeholder="e.g., MWF 10:00 AM - 11:00 AM" {...field} />
                     </FormControl>
+                     <FormDescription>
+                      Enter each schedule on a new line.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
