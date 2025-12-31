@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { FileCheck } from "lucide-react";
+import { useParams } from "next/navigation";
 
 const typeIcons = {
     Lesson: <FileText className="h-5 w-5 text-muted-foreground" />,
@@ -15,12 +16,13 @@ const typeIcons = {
     Assignment: <FileCheck className="h-5 w-5 text-muted-foreground" />
 }
 
-export default function CourseDetailPage({ params }: { params: { courseId: string } }) {
+export default function CourseDetailPage() {
     const { firestore, user } = useFirebase();
-    const { courseId } = params;
+    const params = useParams();
+    const courseId = params.courseId as string;
 
     const courseRef = useMemoFirebase(() => {
-        if (!user) return null;
+        if (!user || !courseId) return null;
         return doc(firestore, `users/${user.uid}/courses`, courseId);
     }, [firestore, user, courseId]);
 
