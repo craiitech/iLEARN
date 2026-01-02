@@ -83,18 +83,14 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
+        // This is the robust way to get the path.
         let path = 'unknown/path';
-        try {
-           // This is the robust way to get the path.
-           // For a CollectionReference, .path is available directly.
-           // For a Query, its .ref property points to the CollectionReference.
-           if (isQuery(memoizedTargetRefOrQuery)) {
-              path = memoizedTargetRefOrQuery.ref.path;
-           } else if ('path' in memoizedTargetRefOrQuery) {
-              path = (memoizedTargetRefOrQuery as CollectionReference).path;
-           }
-        } catch (e) {
-            console.error("Could not determine path for Firestore error reporting:", e);
+        if (memoizedTargetRefOrQuery) { // Defensive check
+            if (isQuery(memoizedTargetRefOrQuery)) {
+                path = memoizedTargetRefOrQuery.ref.path;
+            } else if ('path' in memoizedTargetRefOrQuery) {
+                path = (memoizedTargetRefOrQuery as CollectionReference).path;
+            }
         }
 
         const contextualError = new FirestorePermissionError({
