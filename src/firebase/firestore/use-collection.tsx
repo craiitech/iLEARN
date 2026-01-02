@@ -25,17 +25,16 @@ export interface UseCollectionResult<T> {
   error: FirestoreError | Error | null; // Error object, or null.
 }
 
-/* Internal implementation of Query:
-  https://github.com/firebase/firebase-js-sdk/blob/c5f08a9bc5da0d2b0207802c972d53724ccef055/packages/firestore/src/lite-api/reference.ts#L143
-*/
-export interface InternalQuery extends Query<DocumentData> {
-  _query: {
-    path: {
-      canonicalString(): string;
-      toString(): string;
-    }
-  }
+/**
+ * A type guard to check if a query object has the internal _query structure.
+ * This helps in safely accessing nested properties for path extraction.
+ */
+function isQueryWithInternalPath(
+  query: any
+): query is { _query: { path: { toSegments: () => string[] } } } {
+  return query && typeof query === 'object' && '_query' in query && 'path' in query._query && typeof query._query.path.toSegments === 'function';
 }
+
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
@@ -86,11 +85,17 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // This logic extracts the path from either a ref or a query
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
+        let path = 'unknown/path';
+        try {
+           if (memoizedTargetRefOrQuery.type === 'collection') {
+              path = (memoizedTargetRefOrQuery as CollectionReference).path;
+           } else if (isQueryWithInternalPath(memoizedTargetRefOrQuery)) {
+              // For queries, extract path from internal _query property
+              path = memoizedTargetRefOrQuery._query.path.toSegments().join('/');
+           }
+        } catch (e) {
+            console.error("Could not determine path for Firestore error reporting:", e);
+        }
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',

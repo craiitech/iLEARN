@@ -75,8 +75,8 @@ service cloud.firestore {
       }
 
       allow get: if isStudentOwner() || isAssignmentTeacher();
-      // Teachers can list submissions for assignments they own.
-      allow list: if isSignedIn() && request.query.where[0][0] == 'teacherId' && request.query.where[0][2] == request.auth.uid;
+      // A teacher can list submissions but ONLY if they are querying for submissions that belong to them.
+      allow list: if isTeacher() && request.query.get("teacherId") == request.auth.uid;
       allow create: if isCreatingOwnSubmission();
       allow update: if isAssignmentTeacher(); // Only teachers can grade/update.
       allow delete: if false; // Nobody can delete a submission
