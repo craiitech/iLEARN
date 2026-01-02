@@ -47,9 +47,6 @@ export default function TeacherDashboard() {
             <Button asChild>
                 <Link href="/teacher/courses/new"><PlusCircle /> Create Course</Link>
             </Button>
-            <Button asChild variant="outline">
-                <Link href="/teacher/quizzes/new">Create Quiz</Link>
-            </Button>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
