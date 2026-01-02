@@ -1,83 +1,37 @@
-import { Badge } from "@/components/ui/badge";
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload } from "lucide-react";
-
-const studentAssignments = [
-    { title: "Final Project Proposal", course: "ENG-101", dueDate: "May 25, 2024", status: "Graded", grade: "18/20" },
-    { title: "Lab Report #3", course: "BIO-205", dueDate: "May 28, 2024", status: "Submitted", grade: null },
-    { title: "History Essay: The Cold War", course: "HIST-310", dueDate: "June 1, 2024", status: "Not Submitted", grade: null },
-    { title: "World War II Quiz", course: "HIST-310", dueDate: "June 3, 2024", status: "Not Submitted", grade: null },
-];
+import { PlusCircle, BookOpen } from "lucide-react";
+import { JoinClassDialog } from "@/components/student/join-class-dialog";
 
 export default function StudentDashboard() {
+    // In a real app, you would fetch the student's enrollments.
+    // For now, we'll assume they have none to show the welcome screen.
+    const enrollments = []; // Empty array for now
+
+    if (enrollments.length === 0) {
+        return (
+            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <BookOpen className="h-16 w-16 text-muted-foreground" />
+                    <h3 className="text-2xl font-bold tracking-tight">
+                        You're not enrolled in any classes yet
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-sm">
+                        Use the block code provided by your teacher to join your first class and see your assignments.
+                    </p>
+                    <JoinClassDialog />
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-headline font-bold">Home</h1>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardDescription>Overall Grade</CardDescription>
-                        <CardTitle className="text-4xl">89%</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xs text-muted-foreground">+5% from last week</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardDescription>Upcoming Deadlines</CardDescription>
-                        <CardTitle className="text-4xl">3</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xs text-muted-foreground">Assignments due this week</div>
-                    </CardContent>
-                </Card>
-            </div>
-             <Card>
-                <CardHeader>
-                    <CardTitle>To-Do List</CardTitle>
-                    <CardDescription>Your upcoming assignments and quizzes.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Course</TableHead>
-                                <TableHead>Due Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Action / Grade</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {studentAssignments.map((assignment, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className="font-medium">{assignment.title}</TableCell>
-                                    <TableCell>{assignment.course}</TableCell>
-                                    <TableCell>{assignment.dueDate}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={
-                                            assignment.status === 'Graded' ? 'default' :
-                                            assignment.status === 'Submitted' ? 'outline' : 'secondary'
-                                        } className={
-                                            assignment.status === 'Graded' ? 'bg-accent text-accent-foreground' : ''
-                                        }>
-                                            {assignment.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {assignment.status === 'Not Submitted' && <Button size="sm"><Upload className="mr-2 h-4 w-4"/>Submit</Button>}
-                                        {assignment.status === 'Submitted' && <span className="text-sm text-muted-foreground">Pending Grade</span>}
-                                        {assignment.status === 'Graded' && <span className="font-bold">{assignment.grade}</span>}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            {/* Cards and assignment lists will go here once the student is enrolled in classes */}
         </div>
     )
 }

@@ -136,6 +136,39 @@
       },
       "required": ["id", "courseId", "blockCode", "schedule"]
     },
+    "Enrollment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Enrollment",
+      "type": "object",
+      "description": "Represents the link between a student and a course block.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Enrollment entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "The ID of the enrolled student."
+        },
+        "blockId": {
+          "type": "string",
+          "description": "The ID of the block the student is enrolled in."
+        },
+        "courseId": {
+          "type": "string",
+          "description": "The ID of the master course blueprint."
+        },
+        "teacherId": {
+          "type": "string",
+          "description": "The ID of the teacher for the block."
+        },
+        "enrollmentDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "studentId", "blockId", "courseId", "teacherId", "enrollmentDate"]
+    },
     "Assignment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Assignment",
@@ -420,6 +453,16 @@
             "$ref": "#/entities/User"
           },
           "description": "Stores user profiles."
+        }
+      },
+      {
+        "path": "/users/{studentId}/enrollments/{enrollmentId}",
+        "definition": {
+            "entityName": "Enrollment",
+            "schema": {
+                "$ref": "#/entities/Enrollment"
+            },
+            "description": "Stores records of which students are in which blocks."
         }
       },
       {
