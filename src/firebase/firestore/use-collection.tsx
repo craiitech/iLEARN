@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useFirebase } from '@/firebase/provider'; // Import useFirebase
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -38,15 +39,13 @@ function isQueryWithInternalPath(
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Handles nullable references/queries.
+ * Handles nullable references/queries and waits for user authentication to complete.
  * 
- *
  * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
+ * use useMemoFirebase to memoize it per React guidance.
  *  
  * @template T Optional type for document data. Defaults to any.
- * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} targetRefOrQuery -
+ * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
  * The Firestore CollectionReference or Query. Waits if null/undefined.
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
@@ -57,19 +56,21 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const { isUserLoading } = useFirebase(); // Get auth loading state
 
   useEffect(() => {
-    // If the query/ref is not ready, set loading to true and wait.
-    if (!memoizedTargetRefOrQuery) {
+    // If the query/ref is not ready OR if the user is still loading,
+    // set loading to true and wait. This prevents premature queries.
+    if (!memoizedTargetRefOrQuery || isUserLoading) {
       setIsLoading(true);
       setData(null);
       setError(null);
       return;
     }
 
-    // When the query/ref is ready, proceed with the snapshot listener.
+    // When the query/ref is ready AND the user is loaded, proceed.
     setIsLoading(true);
     setError(null);
 
@@ -87,7 +88,7 @@ export function useCollection<T = any>(
       (error: FirestoreError) => {
         let path = 'unknown/path';
         try {
-           if (memoizedTargetRefOrQuery.type === 'collection') {
+           if ('path' in memoizedTargetRefOrQuery) {
               path = (memoizedTargetRefOrQuery as CollectionReference).path;
            } else if (isQueryWithInternalPath(memoizedTargetRefOrQuery)) {
               // For queries, extract path from internal _query property
@@ -112,11 +113,11 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
+  }, [memoizedTargetRefOrQuery, isUserLoading]); // Re-run if the query OR user loading state changes.
 
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error('A non-memoized query was passed to useCollection. Use useMemoFirebase to memoize the query.');
   }
 
-  return { data, isLoading, error };
+  return { data, isLoading: isLoading || isUserLoading, error };
 }
