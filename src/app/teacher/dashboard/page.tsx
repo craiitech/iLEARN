@@ -1,10 +1,53 @@
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowUpRight, Book, FileCheck, PlusCircle, Users } from "lucide-react";
+import { ArrowUpRight, Book, FileCheck, PlusCircle, Users, Loader2, Library } from "lucide-react";
 import Link from "next/link";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { formatDistanceToNow } from 'date-fns';
 
 export default function TeacherDashboard() {
+  const { firestore, user } = useFirebase();
+
+  const coursesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, `users/${user.uid}/courses`));
+  }, [firestore, user]);
+
+  const quizzesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    // This is a simplification. A real app might query across all subcollections.
+    // For now, let's just show recent quizzes from a specific (or first) course if possible
+    // but the data model does not support this well without collectionGroup queries which are more complex.
+    // We will query all quizzes across all courses.
+    return query(
+      collection(firestore, `users/${user.uid}/quizzes`), 
+      orderBy('createdAt', 'desc'), 
+      limit(2)
+    );
+  }, [firestore, user]);
+  
+  const submissionsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+        collection(firestore, 'submissions'), 
+        where('teacherId', '==', user.uid),
+        orderBy('submissionTime', 'desc'),
+        limit(5)
+    );
+  }, [firestore, user]);
+
+
+  const { data: courses, isLoading: coursesLoading } = useCollection(coursesQuery);
+  const { data: quizzes, isLoading: quizzesLoading } = useCollection(quizzesQuery);
+  const { data: submissions, isLoading: submissionsLoading } = useCollection(submissionsQuery);
+
+  const submissionsToGrade = submissions?.filter(s => !s.grade).length || 0;
+
   return (
     <>
       <div className="flex items-center justify-between">
@@ -25,9 +68,9 @@ export default function TeacherDashboard() {
             <Book className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
+            {coursesLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : <div className="text-2xl font-bold">{courses?.length || 0}</div>}
             <p className="text-xs text-muted-foreground">
-              Your active classes this semester.
+              Your active course blueprints.
             </p>
           </CardContent>
         </Card>
@@ -37,7 +80,7 @@ export default function TeacherDashboard() {
             <FileCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+32</div>
+             {submissionsLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : <div className="text-2xl font-bold">+{submissionsToGrade}</div>}
             <p className="text-xs text-muted-foreground">
               New submissions are awaiting review.
             </p>
@@ -62,7 +105,7 @@ export default function TeacherDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">88%</div>
             <p className="text-xs text-muted-foreground">
-              +2.1% from last month
+              (Static) +2.1% from last month
             </p>
           </CardContent>
         </Card>
@@ -74,7 +117,7 @@ export default function TeacherDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">High</div>
             <p className="text-xs text-muted-foreground">
-              Based on recent activity.
+              (Static) Based on recent activity.
             </p>
           </CardContent>
         </Card>
@@ -96,97 +139,75 @@ export default function TeacherDashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead className="hidden xl:table-column">
-                    Assignment
-                  </TableHead>
-                  <TableHead className="hidden xl:table-column">
-                    Course
-                  </TableHead>
-                  <TableHead className="text-right">Submitted</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Liam Johnson</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      liam@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-column">
-                    Final Project Proposal
-                  </TableCell>
-                  <TableCell className="hidden xl:table-column">
-                    ENG-101
-                  </TableCell>
-                  <TableCell className="text-right">2 min ago</TableCell>
-                </TableRow>
-                 <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Olivia Smith</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      olivia@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-column">
-                    Lab Report #3
-                  </TableCell>
-                  <TableCell className="hidden xl:table-column">
-                    BIO-205
-                  </TableCell>
-                  <TableCell className="text-right">1 hour ago</TableCell>
-                </TableRow>
-                 <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Noah Williams</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      noah@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-column">
-                    History Essay
-                  </TableCell>
-                  <TableCell className="hidden xl:table-column">
-                    HIST-310
-                  </TableCell>
-                  <TableCell className="text-right">3 hours ago</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            {submissionsLoading && <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div>}
+            {!submissionsLoading && submissions && submissions.length > 0 ? (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Assignment</TableHead>
+                    <TableHead className="text-right">Submitted</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {submissions.map(sub => (
+                         <TableRow key={sub.id}>
+                            <TableCell>
+                                <div className="font-medium">{sub.studentName || "Unknown Student"}</div>
+                                <div className="hidden text-sm text-muted-foreground md:inline">
+                                {sub.studentEmail || "No email"}
+                                </div>
+                            </TableCell>
+                             <TableCell>
+                                {sub.assignmentTitle || "Unknown Assignment"}
+                            </TableCell>
+                             <TableCell className="text-right">
+                                {sub.submissionTime ? formatDistanceToNow(new Date(sub.submissionTime), { addSuffix: true }) : 'N/A'}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+            ) : (
+                 !submissionsLoading && <p className="text-sm text-center text-muted-foreground p-8">No recent submissions found.</p>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Recent Quizzes</CardTitle>
+            <CardTitle>My Quizzes</CardTitle>
             <CardDescription>
               Quizzes you recently created or assigned.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-             <div className="flex items-center gap-4">
-                <div className="rounded-md bg-secondary p-3">
-                  <FileCheck className="h-6 w-6 text-secondary-foreground" />
-                </div>
-                <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none">World War II</p>
-                  <p className="text-sm text-muted-foreground">HIST-310, 10 Questions</p>
-                </div>
-                <Button variant="outline" size="sm" className="ml-auto">View</Button>
-            </div>
-             <div className="flex items-center gap-4">
-                <div className="rounded-md bg-secondary p-3">
-                  <FileCheck className="h-6 w-6 text-secondary-foreground" />
-                </div>
-                <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none">Cellular Respiration</p>
-                  <p className="text-sm text-muted-foreground">BIO-205, 15 Questions</p>
-                </div>
-                <Button variant="outline" size="sm" className="ml-auto">View</Button>
-            </div>
+            {quizzesLoading && <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div>}
+             {!quizzesLoading && quizzes && quizzes.length > 0 ? (
+                quizzes.map(quiz => (
+                     <div key={quiz.id} className="flex items-center gap-4">
+                        <div className="rounded-md bg-secondary p-3">
+                        <FileCheck className="h-6 w-6 text-secondary-foreground" />
+                        </div>
+                        <div className="grid gap-1 flex-1">
+                        <p className="text-sm font-medium leading-none truncate">{quiz.title}</p>
+                        <p className="text-sm text-muted-foreground">{quiz.questions.length} Questions</p>
+                        </div>
+                        <Button variant="outline" size="sm" className="ml-auto" asChild>
+                            <Link href={`/teacher/quizzes/${quiz.id}/edit?courseId=${quiz.courseId}`}>View</Link>
+                        </Button>
+                    </div>
+                ))
+             ) : (
+                !quizzesLoading && (
+                    <div className="text-center text-muted-foreground p-4 flex flex-col items-center gap-2">
+                        <Library className="h-8 w-8"/>
+                        <p className="text-sm">No quizzes found.</p>
+                         <Button variant="secondary" size="sm" asChild>
+                            <Link href="/teacher/quizzes/new"><PlusCircle/> Create a Quiz</Link>
+                         </Button>
+                    </div>
+                )
+             )}
           </CardContent>
         </Card>
       </div>
