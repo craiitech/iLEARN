@@ -17,25 +17,6 @@ export default function TeacherDashboard() {
     if (!user) return null;
     return query(collection(firestore, `users/${user.uid}/courses`));
   }, [firestore, user]);
-
-  const quizzesQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    // This query is complex to make across all courses without a collectionGroup query.
-    // For this dashboard, we'll fetch quizzes from the most recently created course.
-    // A more robust implementation might be needed for a full-featured quiz list.
-    const courseQuizzesQuery = query(
-      collection(firestore, `users/${user.uid}/courses`),
-      limit(1)
-    );
-    // This is not ideal, as it makes assumptions, but it's a way to show *some* quizzes.
-    // In a real app, you might have a separate top-level `quizzes` collection
-    // with a `teacherId` to query against.
-    // For now, we will just fetch from all courses.
-     return query(
-      collection(firestore, `users/${user.uid}/courses`),
-      limit(2)
-    );
-  }, [firestore, user]);
   
   const submissionsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -48,7 +29,6 @@ export default function TeacherDashboard() {
 
 
   const { data: courses, isLoading: coursesLoading } = useCollection(coursesQuery);
-  const { data: quizzes, isLoading: quizzesLoading } = useCollection(quizzesQuery);
   const { data: submissions, isLoading: submissionsLoading } = useCollection(submissionsQuery);
   
   const sortedSubmissions = submissions?.sort((a, b) => {
@@ -134,7 +114,7 @@ export default function TeacherDashboard() {
         </Card>
       </div>
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+        <Card className="xl:col-span-3">
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
               <CardTitle>Recent Submissions</CardTitle>
@@ -184,46 +164,7 @@ export default function TeacherDashboard() {
             )}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>My Quizzes</CardTitle>
-            <CardDescription>
-              Quizzes you recently created or assigned.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {quizzesLoading && <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div>}
-             {!quizzesLoading && quizzes && quizzes.length > 0 ? (
-                quizzes.map(quiz => (
-                     <div key={quiz.id} className="flex items-center gap-4">
-                        <div className="rounded-md bg-secondary p-3">
-                        <FileCheck className="h-6 w-6 text-secondary-foreground" />
-                        </div>
-                        <div className="grid gap-1 flex-1">
-                        <p className="text-sm font-medium leading-none truncate">{quiz.title}</p>
-                        <p className="text-sm text-muted-foreground">{quiz.questions?.length || 0} Questions</p>
-                        </div>
-                        <Button variant="outline" size="sm" className="ml-auto" asChild>
-                            <Link href={`/teacher/quizzes/${quiz.id}/edit?courseId=${quiz.id}`}>View</Link>
-                        </Button>
-                    </div>
-                ))
-             ) : (
-                !quizzesLoading && (
-                    <div className="text-center text-muted-foreground p-4 flex flex-col items-center gap-2">
-                        <Library className="h-8 w-8"/>
-                        <p className="text-sm">No quizzes found.</p>
-                         <Button variant="secondary" size="sm" asChild>
-                            <Link href="/teacher/quizzes/new"><PlusCircle/> Create a Quiz</Link>
-                         </Button>
-                    </div>
-                )
-             )}
-          </CardContent>
-        </Card>
       </div>
     </>
   )
 }
-
-    
