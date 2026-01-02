@@ -242,7 +242,9 @@ export default function CourseDetailPage() {
                                                 <TableCell>{block.schedule}</TableCell>
                                                 <TableCell>0</TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm">Manage</Button>
+                                                    <Button asChild variant="outline" size="sm">
+                                                        <Link href={`/teacher/courses/${courseId}/blocks/${block.id}`}>Manage</Link>
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -403,5 +405,7 @@ export default function CourseDetailPage() {
         </div>
     );
 }
+
+    
 
     

@@ -24,6 +24,13 @@ service cloud.firestore {
     function isImmutable(fieldName) {
       return request.resource.data[fieldName] == resource.data[fieldName];
     }
+    
+    // A teacher who owns the course can see the enrollments for that course's block.
+    // This is a simplified rule. A more robust rule might check against a list of teachers for a course.
+    function isTeacherForBlock(blockId) {
+       let block = get(/databases/$(database)/documents/users/$(request.auth.uid)/courses/$(resource.data.courseId)/blocks/$(blockId));
+       return block != null;
+    }
 
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -39,6 +46,11 @@ service cloud.firestore {
         // Nobody can update or delete an enrollment for now to maintain record integrity.
         allow update, delete: if false;
       }
+    }
+    
+    // Enrollments can be listed by the teacher who owns the course of the block.
+    match /enrollments/{enrollmentId} {
+       allow get, list: if isTeacher() && isTeacherForBlock(resource.data.blockId);
     }
 
     match /users/{teacherId}/courses/{courseId} {
@@ -107,3 +119,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
