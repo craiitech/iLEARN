@@ -1,8 +1,12 @@
+
+"use client";
+
 import {
   BookOpen,
   Calendar,
   GraduationCap,
   Home,
+  Loader2,
   Settings,
 } from "lucide-react";
 import Link from "next/link";
@@ -19,12 +23,48 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
+import { useFirebase } from "@/firebase";
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+
 
 export default function StudentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+   const { user, isUserLoading } = useFirebase();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // If auth is not loading and there's no user, redirect to login.
+    // We also make sure we are not already on the login page to avoid a redirect loop.
+    if (!isUserLoading && !user && pathname !== '/student/login') {
+      router.push('/student/login');
+    }
+    // If the user is logged in and tries to go to the login page, redirect to dashboard.
+    if (!isUserLoading && user && pathname === '/student/login') {
+      router.push('/student/dashboard');
+    }
+  }, [user, isUserLoading, router, pathname]);
+
+  // While loading authentication state, show a loader.
+  // If there's no user and we are not on the login page, also show a loader
+  // to prevent a flash of the old page content before redirection.
+  if (isUserLoading || (!user && pathname !== '/student/login')) {
+      return (
+          <div className="flex h-screen w-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+      );
+  }
+
+  // If we are on the login page, render the children directly without the sidebar layout.
+  if (pathname === '/student/login') {
+    return <>{children}</>;
+  }
+
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
@@ -96,7 +136,7 @@ export default function StudentLayout({
             </div>
             <UserNav />
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
           {children}
         </main>
       </SidebarInset>

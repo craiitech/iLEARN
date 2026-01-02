@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { placeholderImages } from '@/lib/placeholder-images';
@@ -62,7 +63,7 @@ export default function LandingPage() {
                      <a href="/teacher/login">Teacher Access</a>
                    </Button>
                    <Button asChild variant="secondary" size="lg">
-                     <a href="/student/dashboard">Student Portal</a>
+                     <a href="/student/login">Student Portal</a>
                    </Button>
                 </div>
               </div>
