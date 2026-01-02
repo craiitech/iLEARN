@@ -58,13 +58,12 @@ service cloud.firestore {
     }
 
     match /submissions/{submissionId} {
-      allow get: if (isOwner(request.resource.data.userId) || isTeacher(request.resource.data.teacherId));
-      allow list: if isSignedIn(); // Be cautious, might need to be more restrictive
+      allow get: if isOwner(resource.data.userId) || isTeacher(resource.data.teacherId);
+      // Teachers can list submissions where they are the teacher
+      allow list: if isSignedIn() && request.query.where.size() > 0 && request.query.where[0][0] == 'teacherId' && request.query.where[0][2] == request.auth.uid;
       allow create: if isOwner(request.resource.data.userId);
-      allow update: if isTeacher(request.resource.data.teacherId); // Only teachers can grade
+      allow update: if isTeacher(resource.data.teacherId); // Only teachers can grade
       allow delete: if false; // Nobody can delete a submission
     }
   }
 }
-
-    
