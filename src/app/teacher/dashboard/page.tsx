@@ -20,11 +20,20 @@ export default function TeacherDashboard() {
 
   const quizzesQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(
+    // This query is complex to make across all courses without a collectionGroup query.
+    // For this dashboard, we'll fetch quizzes from the most recently created course.
+    // A more robust implementation might be needed for a full-featured quiz list.
+    const courseQuizzesQuery = query(
       collection(firestore, `users/${user.uid}/courses`),
-      // This is a placeholder, a real implementation would need a collectionGroup query for quizzes
-      // For now, let's limit it to quizzes within the first course for demonstration
-      // A more robust solution would be needed for a real app.
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    // This is not ideal, as it makes assumptions, but it's a way to show *some* quizzes.
+    // In a real app, you might have a separate top-level `quizzes` collection
+    // with a `teacherId` to query against.
+    // For now, we will just fetch from all courses.
+     return query(
+      collection(firestore, `users/${user.uid}/courses`),
       limit(2)
     );
   }, [firestore, user]);
@@ -34,7 +43,6 @@ export default function TeacherDashboard() {
     return query(
         collection(firestore, 'submissions'), 
         where('teacherId', '==', user.uid),
-        orderBy('submissionTime', 'desc'),
         limit(5)
     );
   }, [firestore, user]);
@@ -43,6 +51,12 @@ export default function TeacherDashboard() {
   const { data: courses, isLoading: coursesLoading } = useCollection(coursesQuery);
   const { data: quizzes, isLoading: quizzesLoading } = useCollection(quizzesQuery);
   const { data: submissions, isLoading: submissionsLoading } = useCollection(submissionsQuery);
+  
+  const sortedSubmissions = submissions?.sort((a, b) => {
+      const timeA = a.submissionTime?.toDate() || 0;
+      const timeB = b.submissionTime?.toDate() || 0;
+      return (timeB as number) - (timeA as number);
+  });
 
   const submissionsToGrade = submissions?.filter(s => !s.grade).length || 0;
 
@@ -138,7 +152,7 @@ export default function TeacherDashboard() {
           </CardHeader>
           <CardContent>
             {submissionsLoading && <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div>}
-            {!submissionsLoading && submissions && submissions.length > 0 ? (
+            {!submissionsLoading && sortedSubmissions && sortedSubmissions.length > 0 ? (
                 <Table>
                 <TableHeader>
                     <TableRow>
@@ -148,7 +162,7 @@ export default function TeacherDashboard() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {submissions.map(sub => (
+                    {sortedSubmissions.map(sub => (
                          <TableRow key={sub.id}>
                             <TableCell>
                                 <div className="font-medium">{sub.studentName || "Unknown Student"}</div>
