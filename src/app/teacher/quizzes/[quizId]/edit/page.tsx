@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { useFirebase, useDoc } from "@/firebase";
 import { collection, doc, updateDoc } from "firebase/firestore";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Suspense } from "react";
@@ -56,20 +56,20 @@ function EditQuizPageContent() {
   const quizId = params.quizId as string;
   const courseId = searchParams.get('courseId');
 
-  const { user, firestore } = useFirebase();
+  const { user, firestore, isUserLoading } = useFirebase();
   const { toast } = useToast();
 
-  const quizRef = useMemoFirebase(() => {
-    if (!user || !courseId || !quizId) return null;
+  const quizRef = useMemo(() => {
+    if (isUserLoading || !user || !courseId || !quizId) return null;
     return doc(firestore, `users/${user.uid}/courses/${courseId}/quizzes`, quizId);
-  }, [firestore, user, courseId, quizId]);
+  }, [firestore, user, courseId, quizId, isUserLoading]);
 
   const { data: quiz, isLoading: isQuizLoading } = useDoc(quizRef);
 
-  const courseRef = useMemoFirebase(() => {
-    if (!user || !courseId) return null;
+  const courseRef = useMemo(() => {
+    if (isUserLoading || !user || !courseId) return null;
     return doc(firestore, `users/${user.uid}/courses`, courseId);
-  }, [firestore, user, courseId]);
+  }, [firestore, user, courseId, isUserLoading]);
 
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
 

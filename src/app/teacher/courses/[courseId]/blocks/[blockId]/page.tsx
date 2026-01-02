@@ -8,34 +8,34 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Loader2, Users, ClipboardCopy } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useFirebase, useDoc, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirebase, useDoc, useCollection } from "@/firebase";
 import { doc, collection, query, where } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
 function BlockDetailPage() {
     const params = useParams();
-    const { firestore, user } = useFirebase();
+    const { firestore, user, isUserLoading } = useFirebase();
     const { toast } = useToast();
     const courseId = params.courseId as string;
     const blockId = params.blockId as string;
 
-    const blockRef = useMemoFirebase(() => {
-        if (!user || !courseId || !blockId) return null;
+    const blockRef = useMemo(() => {
+        if (isUserLoading || !user) return null;
         return doc(firestore, `users/${user.uid}/courses/${courseId}/blocks`, blockId);
-    }, [firestore, user, courseId, blockId]);
+    }, [firestore, user, courseId, blockId, isUserLoading]);
 
     const { data: block, isLoading: isBlockLoading } = useDoc(blockRef);
 
-    const enrollmentsQuery = useMemoFirebase(() => {
-        if (!firestore || !user || !blockId) return null;
+    const enrollmentsQuery = useMemo(() => {
+        if (isUserLoading || !user) return null;
         // Query the top-level 'enrollments' collection
         return query(
             collection(firestore, "enrollments"),
             where("blockId", "==", blockId),
             where("teacherId", "==", user.uid)
         );
-    }, [firestore, user, blockId]);
+    }, [firestore, user, blockId, isUserLoading]);
 
     const { data: enrollments, isLoading: areEnrollmentsLoading } = useCollection(enrollmentsQuery);
 

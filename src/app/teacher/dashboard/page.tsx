@@ -1,31 +1,32 @@
 
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowUpRight, Book, FileCheck, PlusCircle, Users, Loader2, Library } from "lucide-react";
 import Link from "next/link";
-import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirebase, useCollection } from "@/firebase";
 import { collection, query, where, limit } from "firebase/firestore";
 import { formatDistanceToNow } from 'date-fns';
 
 export default function TeacherDashboard() {
-  const { firestore, user } = useFirebase();
+  const { firestore, user, isUserLoading } = useFirebase();
 
-  const coursesQuery = useMemoFirebase(() => {
-    if (!user) return null;
+  const coursesQuery = useMemo(() => {
+    if (isUserLoading || !user) return null;
     return query(collection(firestore, `users/${user.uid}/courses`));
-  }, [firestore, user]);
+  }, [firestore, user, isUserLoading]);
   
-  const submissionsQuery = useMemoFirebase(() => {
-    if (!user) return null;
+  const submissionsQuery = useMemo(() => {
+    if (isUserLoading || !user) return null;
     return query(
         collection(firestore, 'submissions'), 
         where('teacherId', '==', user.uid),
         limit(5)
     );
-  }, [firestore, user]);
+  }, [firestore, user, isUserLoading]);
 
 
   const { data: courses, isLoading: coursesLoading } = useCollection(coursesQuery);

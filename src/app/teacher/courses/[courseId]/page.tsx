@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy, ChevronsUpDown, Eye, Tags } from "lucide-react";
 import Link from "next/link";
-import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { useFirebase, useDoc, useCollection } from "@/firebase";
 import { doc, collection, query, orderBy } from "firebase/firestore";
 import { FileCheck } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -71,7 +71,7 @@ export function getEditUrl(courseId: string, item: LearningPathItem) {
 }
 
 export default function CourseDetailPage() {
-    const { firestore, user } = useFirebase();
+    const { firestore, user, isUserLoading } = useFirebase();
     const params = useParams();
     const courseId = params.courseId as string;
     const [isPolicyOpen, setIsPolicyOpen] = useState(true);
@@ -79,27 +79,27 @@ export default function CourseDetailPage() {
     const [previewItem, setPreviewItem] = useState<LearningPathItem | null>(null);
     const { toast } = useToast();
 
-    const courseRef = useMemoFirebase(() => {
-        if (!user || !courseId) return null;
+    const courseRef = useMemo(() => {
+        if (isUserLoading || !user) return null;
         return doc(firestore, `users/${user.uid}/courses`, courseId);
-    }, [firestore, user, courseId]);
+    }, [firestore, user, courseId, isUserLoading]);
 
-    const blocksQuery = useMemoFirebase(() => {
+    const blocksQuery = useMemo(() => {
         if(!courseRef) return null;
         return query(collection(courseRef, 'blocks'));
     }, [courseRef]);
     
-    const lessonsQuery = useMemoFirebase(() => {
+    const lessonsQuery = useMemo(() => {
         if (!courseRef) return null;
         return query(collection(courseRef, 'lessons'), orderBy('createdAt', 'asc'));
     }, [courseRef]);
 
-    const assignmentsQuery = useMemoFirebase(() => {
+    const assignmentsQuery = useMemo(() => {
         if (!courseRef) return null;
         return query(collection(courseRef, 'assignments'), orderBy('createdAt', 'asc'));
     }, [courseRef]);
 
-    const quizzesQuery = useMemoFirebase(() => {
+    const quizzesQuery = useMemo(() => {
         if (!courseRef) return null;
         return query(collection(courseRef, 'quizzes'), orderBy('createdAt', 'asc'));
     }, [courseRef]);
@@ -427,7 +427,3 @@ export default function CourseDetailPage() {
         </div>
     );
 }
-
-    
-
-    

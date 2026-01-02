@@ -21,14 +21,15 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save, PlusCircle, Trash2, GripVertical } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { useFirebase, useDoc, useCollection } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, query } from "firebase/firestore";
 import { useState, Suspense, useMemo, useEffect } from "react";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const rubricLevelSchema = z.object({
     levelTitle: z.string().min(1, "Level title is required."),
@@ -52,6 +53,7 @@ const formSchema = z.object({
   dueDate: z.date().optional(),
   closingDate: z.date().optional(),
   rubric: z.array(rubricCriterionSchema).default([]),
+  visibleInBlocks: z.array(z.string()).default([]),
 }).refine(data => {
     if (data.dueDate && data.closingDate) {
         return data.closingDate >= data.dueDate;
@@ -71,22 +73,29 @@ function EditAssignmentPageContent() {
   const assignmentId = params.assignmentId as string;
   const type = searchParams.get('type') || "Assignment";
 
-  const { firestore, user } = useFirebase();
+  const { firestore, user, isUserLoading } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
   
-  const assignmentRef = useMemoFirebase(() => {
-    if (!user || !courseId || !assignmentId) return null;
+  const assignmentRef = useMemo(() => {
+    if (isUserLoading || !user) return null;
     return doc(firestore, `users/${user.uid}/courses/${courseId}/assignments`, assignmentId);
-  }, [firestore, user, courseId, assignmentId]);
+  }, [firestore, user, courseId, assignmentId, isUserLoading]);
 
   const { data: assignment, isLoading: isAssignmentLoading } = useDoc(assignmentRef);
   
-  const courseRef = useMemoFirebase(() => {
-    if (!user || !courseId) return null;
+  const courseRef = useMemo(() => {
+    if (isUserLoading || !user) return null;
     return doc(firestore, `users/${user.uid}/courses`, courseId);
-  }, [firestore, user, courseId]);
+  }, [firestore, user, courseId, isUserLoading]);
 
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
+
+  const blocksQuery = useMemo(() => {
+      if(isUserLoading || !courseRef) return null;
+      return query(collection(courseRef, 'blocks'));
+  }, [courseRef, isUserLoading]);
+
+  const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -97,6 +106,7 @@ function EditAssignmentPageContent() {
       deliverables: "",
       rubric: [],
       gradingPeriod: "",
+      visibleInBlocks: [],
     },
   });
 
@@ -107,6 +117,7 @@ function EditAssignmentPageContent() {
         ...assignment,
         dueDate: assignment.dueDate ? new Date(assignment.dueDate) : undefined,
         closingDate: assignment.closingDate ? new Date(assignment.closingDate) : undefined,
+        visibleInBlocks: assignment.visibleInBlocks || [],
       });
     }
   }, [assignment, reset]);
@@ -284,6 +295,62 @@ function EditAssignmentPageContent() {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Block Visibility</CardTitle>
+                    <CardDescription>Select which blocks this will be visible to. If none are selected, it will be visible to all.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <FormField
+                        control={form.control}
+                        name="visibleInBlocks"
+                        render={() => (
+                            <FormItem>
+                                {areBlocksLoading && <Loader2 className="h-5 w-5 animate-spin" />}
+                                {!areBlocksLoading && blocks && blocks.length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {blocks.map((block) => (
+                                            <FormField
+                                                key={block.id}
+                                                control={form.control}
+                                                name="visibleInBlocks"
+                                                render={({ field }) => {
+                                                    return (
+                                                        <FormItem
+                                                            key={block.id}
+                                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                                        >
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={field.value?.includes(block.id)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        return checked
+                                                                        ? field.onChange([...(field.value || []), block.id])
+                                                                        : field.onChange(
+                                                                            field.value?.filter(
+                                                                            (value) => value !== block.id
+                                                                            )
+                                                                        )
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">{block.blockCode}</FormLabel>
+                                                        </FormItem>
+                                                    )
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                   <p className="text-sm text-muted-foreground">No blocks have been created for this course yet.</p>
+                                )}
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </CardContent>
             </Card>
 

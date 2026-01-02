@@ -1,20 +1,21 @@
 
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, BookOpen, Settings, Library, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirebase, useCollection } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 
 export default function CoursesPage() {
-    const { firestore, user } = useFirebase();
+    const { firestore, user, isUserLoading } = useFirebase();
 
-    const coursesQuery = useMemoFirebase(() => {
-        if (!user) return null;
+    const coursesQuery = useMemo(() => {
+        if (isUserLoading || !user) return null;
         return query(collection(firestore, `users/${user.uid}/courses`));
-    }, [firestore, user]);
+    }, [firestore, user, isUserLoading]);
 
     const { data: courses, isLoading } = useCollection(coursesQuery);
 

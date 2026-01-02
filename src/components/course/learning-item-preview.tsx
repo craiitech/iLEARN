@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { useFirebase, useDoc } from "@/firebase";
 import { doc } from "firebase/firestore";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getEditUrl, type LearningPathItem } from "@/app/teacher/courses/[courseId]/page";
 import { Checkbox } from "../ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { useMemo } from "react";
 
 type LearningItemPreviewDialogProps = {
   item: LearningPathItem | null;
@@ -28,7 +29,7 @@ type LearningItemPreviewDialogProps = {
 };
 
 export function LearningItemPreviewDialog({ item, courseId, open, onOpenChange }: LearningItemPreviewDialogProps) {
-  const { firestore, user } = useFirebase();
+  const { firestore, user, isUserLoading } = useFirebase();
 
   let subcollectionName = '';
   if (item) {
@@ -39,10 +40,10 @@ export function LearningItemPreviewDialog({ item, courseId, open, onOpenChange }
     }
   }
 
-  const itemRef = useMemoFirebase(() => {
-    if (!user || !courseId || !item || !subcollectionName) return null;
+  const itemRef = useMemo(() => {
+    if (isUserLoading || !user || !courseId || !item || !subcollectionName) return null;
     return doc(firestore, `users/${user.uid}/courses/${courseId}/${subcollectionName}`, item.id);
-  }, [firestore, user, courseId, item, subcollectionName]);
+  }, [firestore, user, courseId, item, subcollectionName, isUserLoading]);
 
   const { data: itemData, isLoading } = useDoc(itemRef);
 

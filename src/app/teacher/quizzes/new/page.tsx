@@ -1,27 +1,26 @@
 
-
 "use client";
 
 import { QuizCreator } from "@/components/quiz/quiz-creator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Lightbulb, Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { useFirebase, useDoc } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 function NewQuizPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const courseId = searchParams.get('courseId');
-  const { user, firestore } = useFirebase();
+  const { user, firestore, isUserLoading } = useFirebase();
 
-  const courseRef = useMemoFirebase(() => {
-    if (!user || !courseId) return null;
+  const courseRef = useMemo(() => {
+    if (isUserLoading || !user || !courseId) return null;
     return doc(firestore, `users/${user.uid}/courses`, courseId);
-  }, [firestore, user, courseId]);
+  }, [firestore, user, courseId, isUserLoading]);
 
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
 
@@ -81,5 +80,3 @@ export default function NewQuizPage() {
     </Suspense>
   )
 }
-
-    
