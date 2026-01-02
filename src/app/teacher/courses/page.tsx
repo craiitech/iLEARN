@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ export default function CoursesPage() {
                             <CardContent className="flex flex-col justify-end flex-grow mt-4">
                                 <div className="flex gap-2">
                                     <Button variant="outline" size="sm" asChild className="flex-1">
-                                        <Link href={`/teacher/courses/${course.id}`}><BookOpen className="mr-2 h-4 w-4"/>Manage Curriculum</Link>
+                                        <Link href={`/teacher/courses/${course.id}`}><BookOpen className="mr-2 h-4 w-4"/>Manage Course</Link>
                                     </Button>
                                     <Button variant="ghost" size="icon">
                                         <Settings className="h-5 w-5" />
