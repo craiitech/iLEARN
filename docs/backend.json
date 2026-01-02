@@ -222,6 +222,13 @@
             "format": "date-time",
             "description": "The final date after which submissions are not accepted."
         },
+        "visibleInBlocks": {
+            "type": "array",
+            "description": "An array of Block IDs where this assignment is visible.",
+            "items": {
+                "type": "string"
+            }
+        },
         "rubric": {
             "type": "array",
             "description": "The grading rubric for the assignment.",
@@ -300,6 +307,13 @@
         "pointsPossible": {
           "type": "number",
           "description": "Maximum points possible for quiz."
+        },
+        "visibleInBlocks": {
+            "type": "array",
+            "description": "An array of Block IDs where this quiz is visible.",
+            "items": {
+                "type": "string"
+            }
         }
       },
       "required": ["id", "courseId", "title", "questions", "pointsPossible"]
@@ -431,6 +445,13 @@
         "contentValue": {
           "type": "string",
           "description": "The main content of the lesson, either rich text or a URL."
+        },
+        "visibleInBlocks": {
+            "type": "array",
+            "description": "An array of Block IDs where this lesson is visible.",
+            "items": {
+                "type": "string"
+            }
         }
       },
       "required": ["id", "courseId", "title", "learningOutcome", "objectives", "contentType", "contentValue"]

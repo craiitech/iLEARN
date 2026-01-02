@@ -21,14 +21,15 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save, FileText, Youtube, Presentation, Link as LinkIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, query } from "firebase/firestore";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
@@ -39,6 +40,7 @@ const formSchema = z.object({
   internationalization: z.string().optional(),
   contentType: z.enum(["text", "pdf", "presentation", "youtube"]),
   contentValue: z.string().min(1, "Content is required."),
+  visibleInBlocks: z.array(z.string()).default([]),
 }).refine(data => {
     if (data.contentType === 'youtube') {
       try {
@@ -76,6 +78,12 @@ export default function NewLessonPage() {
   }, [firestore, user, courseId]);
 
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
+  
+  const blocksQuery = useMemoFirebase(() => {
+      if(!courseRef) return null;
+      return query(collection(courseRef, 'blocks'));
+  }, [courseRef]);
+  const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,6 +96,7 @@ export default function NewLessonPage() {
       internationalization: "",
       contentType: "text",
       contentValue: "",
+      visibleInBlocks: [],
     },
   });
 
@@ -218,6 +227,62 @@ export default function NewLessonPage() {
                     </FormItem>
                     )}
                 />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Block Visibility</CardTitle>
+                    <CardDescription>Select which blocks this lesson will be visible to. If none are selected, it will be visible to all.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <FormField
+                        control={form.control}
+                        name="visibleInBlocks"
+                        render={() => (
+                            <FormItem>
+                                {areBlocksLoading && <Loader2 className="h-5 w-5 animate-spin" />}
+                                {!areBlocksLoading && blocks && blocks.length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {blocks.map((block) => (
+                                            <FormField
+                                                key={block.id}
+                                                control={form.control}
+                                                name="visibleInBlocks"
+                                                render={({ field }) => {
+                                                    return (
+                                                        <FormItem
+                                                            key={block.id}
+                                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                                        >
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={field.value?.includes(block.id)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        return checked
+                                                                        ? field.onChange([...(field.value || []), block.id])
+                                                                        : field.onChange(
+                                                                            field.value?.filter(
+                                                                            (value) => value !== block.id
+                                                                            )
+                                                                        )
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">{block.blockCode}</FormLabel>
+                                                        </FormItem>
+                                                    )
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                   <p className="text-sm text-muted-foreground">No blocks have been created for this course yet.</p>
+                                )}
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </CardContent>
             </Card>
 

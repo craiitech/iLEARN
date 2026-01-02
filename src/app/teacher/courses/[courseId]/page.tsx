@@ -4,7 +4,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy, ChevronsUpDown, Eye } from "lucide-react";
+import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy, ChevronsUpDown, Eye, Tags } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { doc, collection, query, orderBy } from "firebase/firestore";
@@ -33,6 +33,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { LearningItemPreviewDialog } from "@/components/course/learning-item-preview";
+import { Badge } from "@/components/ui/badge";
 
 
 const typeIcons = {
@@ -50,6 +51,7 @@ export type LearningPathItem = {
     createdAt: { toDate: () => Date };
     type: 'Lesson' | 'Quiz' | 'Assignment' | 'Activity' | 'Exercise' | 'Lab Activity';
     gradingPeriod: string;
+    visibleInBlocks?: string[];
 }
 
 export function getEditUrl(courseId: string, item: LearningPathItem) {
@@ -107,6 +109,14 @@ export default function CourseDetailPage() {
     const { data: lessons, isLoading: areLessonsLoading } = useCollection(lessonsQuery);
     const { data: assignments, isLoading: areAssignmentsLoading } = useCollection(assignmentsQuery);
     const { data: quizzes, isLoading: areQuizzesLoading } = useCollection(quizzesQuery);
+
+    const blockIdToCodeMap = useMemo(() => {
+        if (!blocks) return {};
+        return blocks.reduce((acc, block) => {
+            acc[block.id] = block.blockCode;
+            return acc;
+        }, {} as Record<string, string>);
+    }, [blocks]);
 
     const learningPathByTerm = useMemo(() => {
         const allItems: LearningPathItem[] = [
@@ -322,7 +332,19 @@ export default function CourseDetailPage() {
                                                           <li key={item.id} className="flex items-center gap-4 rounded-md border bg-background p-3 shadow-sm">
                                                               <GripVertical className="h-5 w-5 cursor-grab text-muted-foreground" />
                                                               {typeIcons[item.type]}
-                                                              <span className="flex-grow font-medium">{item.title}</span>
+                                                              <div className="flex-grow">
+                                                                <span className="font-medium">{item.title}</span>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <Tags className="h-3 w-3 text-muted-foreground"/>
+                                                                    {item.visibleInBlocks && item.visibleInBlocks.length > 0 ? (
+                                                                        item.visibleInBlocks.map(blockId => (
+                                                                            <Badge key={blockId} variant="secondary">{blockIdToCodeMap[blockId] || 'Unknown Block'}</Badge>
+                                                                        ))
+                                                                    ) : (
+                                                                        <Badge variant="outline">All Blocks</Badge>
+                                                                    )}
+                                                                </div>
+                                                              </div>
                                                               <span className="text-sm text-muted-foreground">{item.type}</span>
                                                               <div className="flex items-center gap-2">
                                                                   <Button variant="outline" size="sm" onClick={() => setPreviewItem(item)}>
