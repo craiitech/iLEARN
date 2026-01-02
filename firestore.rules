@@ -11,10 +11,16 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isTeacher(teacherId) {
-      return isSignedIn() && request.auth.uid == teacherId;
+    function isTeacher() {
+      // In a real app, you'd check a custom claim or a 'roles' document.
+      // For this MVP, we assume any signed-in user might be a teacher.
+      return isSignedIn();
     }
     
+    function isTeacherOwner(teacherId) {
+        return isSignedIn() && request.auth.uid == teacherId;
+    }
+
     function isImmutable(fieldName) {
       return request.resource.data[fieldName] == resource.data[fieldName];
     }
@@ -28,41 +34,51 @@ service cloud.firestore {
     }
 
     match /users/{teacherId}/courses/{courseId} {
-        allow get, list: if isOwner(teacherId);
-        allow create: if isOwner(teacherId) && request.resource.data.teacherId == teacherId;
-        allow update: if isOwner(teacherId) && resource != null && isImmutable('teacherId');
-        allow delete: if isOwner(teacherId);
+        allow get, list: if isTeacherOwner(teacherId);
+        allow create: if isTeacherOwner(teacherId) && request.resource.data.teacherId == teacherId;
+        allow update: if isTeacherOwner(teacherId) && resource != null && isImmutable('teacherId');
+        allow delete: if isTeacherOwner(teacherId);
 
         match /blocks/{blockId} {
-          allow get, list, create: if isOwner(teacherId);
-          allow update, delete: if isOwner(teacherId) && resource != null;
+          allow get, list, create: if isTeacherOwner(teacherId);
+          allow update, delete: if isTeacherOwner(teacherId) && resource != null;
         }
 
         match /lessons/{lessonId} {
-          allow get, list, create, update, delete: if isOwner(teacherId);
+          allow get, list, create, update, delete: if isTeacherOwner(teacherId);
         }
 
         match /assignments/{assignmentId} {
-          allow get, list, create: if isOwner(teacherId);
-          allow update, delete: if isOwner(teacherId) && resource != null;
+          allow get, list, create: if isTeacherOwner(teacherId);
+          allow update, delete: if isTeacherOwner(teacherId) && resource != null;
         }
 
         match /quizzes/{quizId} {
-          allow get, list, create: if isOwner(teacherId);
-          allow update, delete: if isOwner(teacherId) && resource != null;
+          allow get, list, create: if isTeacherOwner(teacherId);
+          allow update, delete: if isTeacherOwner(teacherId) && resource != null;
 
           match /questions/{questionId} {
-             allow get, list, create, update, delete: if isOwner(teacherId);
+             allow get, list, create, update, delete: if isTeacherOwner(teacherId);
           }
         }
     }
 
     match /submissions/{submissionId} {
-      allow get: if isOwner(resource.data.userId) || isTeacher(resource.data.teacherId);
-      // Teachers can list submissions where they are the teacher
+      function isStudentOwner() {
+        return isOwner(resource.data.userId);
+      }
+      function isAssignmentTeacher() {
+        return isSignedIn() && resource.data.teacherId == request.auth.uid;
+      }
+       function isCreatingOwnSubmission() {
+        return isOwner(request.resource.data.userId);
+      }
+
+      allow get: if isStudentOwner() || isAssignmentTeacher();
+      // Teachers can list submissions for assignments they own.
       allow list: if isSignedIn() && request.query.where[0][0] == 'teacherId' && request.query.where[0][2] == request.auth.uid;
-      allow create: if isOwner(request.resource.data.userId);
-      allow update: if isTeacher(resource.data.teacherId); // Only teachers can grade
+      allow create: if isCreatingOwnSubmission();
+      allow update: if isAssignmentTeacher(); // Only teachers can grade/update.
       allow delete: if false; // Nobody can delete a submission
     }
   }
