@@ -24,16 +24,6 @@ service cloud.firestore {
     function isImmutable(fieldName) {
       return request.resource.data[fieldName] == resource.data[fieldName];
     }
-    
-    // A teacher who owns the course can see the enrollments for that course's block.
-    // This is a simplified rule. A more robust rule might check against a list of teachers for a course.
-    function isTeacherForBlock(blockId) {
-       // This rule expects that the enrollment document being read (`resource.data`) has a `courseId` field.
-       // It then constructs the path to the block document and checks for its existence under the logged-in teacher's user document.
-       // This implicitly verifies that the teacher owns the course containing the block.
-       let blockPath = /databases/$(database)/documents/users/$(request.auth.uid)/courses/$(resource.data.courseId)/blocks/$(blockId);
-       return exists(blockPath);
-    }
 
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -41,20 +31,6 @@ service cloud.firestore {
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isOwner(userId) && resource != null && isImmutable('id');
       allow delete: if isOwner(userId) && resource != null;
-
-      match /enrollments/{enrollmentId} {
-        // A student can create and read their own enrollment records.
-        allow create: if isOwner(userId) && request.resource.data.studentId == userId;
-        allow get, list: if isOwner(userId);
-        // Nobody can update or delete an enrollment for now to maintain record integrity.
-        allow update, delete: if false;
-      }
-    }
-    
-    // Enrollments can be listed by the teacher who owns the course of the block.
-    // The query must filter by blockId, and the rule checks if the teacher has access to that block.
-    match /enrollments/{enrollmentId} {
-       allow get, list: if isTeacher() && isTeacherForBlock(resource.data.blockId);
     }
 
     match /users/{teacherId}/courses/{courseId} {
@@ -105,7 +81,7 @@ service cloud.firestore {
       
       // Allow a teacher to list submissions, but security is enforced by the query in the app code
       // which MUST include `where('teacherId', '==', request.auth.uid)`.
-      allow list: if isTeacher();
+      allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
 
       allow create: if isCreatingOwnSubmission();
       
@@ -120,6 +96,19 @@ service cloud.firestore {
     // for the student to be able to find a block by its code.
     match /{path=**}/blocks/{blockId} {
         allow get: if isSignedIn();
+    }
+    
+    // This rule allows a collection group query on 'enrollments'
+    match /{path=**}/enrollments/{enrollmentId} {
+        // A student can read their own enrollments.
+        allow get: if isOwner(resource.data.studentId);
+        
+        // A student can create their own enrollment.
+        allow create: if isOwner(request.resource.data.studentId);
+        
+        // A teacher can list enrollments for a block they own.
+        // This relies on the query including `where('teacherId', '==', request.auth.uid)`
+        allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
     }
   }
 }

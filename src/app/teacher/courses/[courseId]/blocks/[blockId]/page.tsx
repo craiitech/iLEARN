@@ -9,7 +9,7 @@ import { ArrowLeft, Loader2, Users, ClipboardCopy } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useFirebase, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, collection, query, where } from "firebase/firestore";
+import { doc, collection, query, where, collectionGroup } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,9 +28,14 @@ function BlockDetailPage() {
     const { data: block, isLoading: isBlockLoading } = useDoc(blockRef);
 
     const enrollmentsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, "enrollments"), where("blockId", "==", blockId));
-    }, [firestore, blockId]);
+        if (!firestore || !user || !blockId) return null;
+        // This query now includes the teacherId to satisfy security rules.
+        return query(
+            collectionGroup(firestore, "enrollments"),
+            where("blockId", "==", blockId),
+            where("teacherId", "==", user.uid)
+        );
+    }, [firestore, user, blockId]);
 
     const { data: enrollments, isLoading: areEnrollmentsLoading } = useCollection(enrollmentsQuery);
 

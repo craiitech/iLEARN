@@ -29,7 +29,6 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { useFirebase } from "@/firebase";
 import { collectionGroup, getDocs, query, where, collection, addDoc } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useRouter } from "next/navigation";
 
 
@@ -84,7 +83,7 @@ export function JoinClassDialog() {
             const teacherId = courseRef.parent.id;
 
             // Create the enrollment document
-            const enrollmentsCollection = collection(firestore, `users/${user.uid}/enrollments`);
+            const enrollmentsCollection = collection(firestore, 'enrollments');
             await addDoc(enrollmentsCollection, {
                 studentId: user.uid,
                 blockId: blockDoc.id,
@@ -141,7 +140,7 @@ export function JoinClassDialog() {
                   <FormItem>
                     <FormLabel>Block Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., APLIT-S24" {...field} />
+                      <Input placeholder="e.g., AB-12-CD" {...field} />
                     </FormControl>
                     <FormDescription>
                       This code is case-sensitive.
