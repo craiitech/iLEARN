@@ -109,7 +109,7 @@ function EditAssignmentPageContent() {
         closingDate: assignment.closingDate ? new Date(assignment.closingDate) : undefined,
       });
     }
-  }, [assignment, reset]);
+  }, [assignment]);
 
 
   const { fields: criteriaFields, append: appendCriterion, remove: removeCriterion } = useFieldArray({
