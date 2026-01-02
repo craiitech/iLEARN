@@ -70,7 +70,7 @@ export default function EditLessonPage() {
   const params = useParams();
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
-  const { firestore, user } = useFirebase();
+  const { firestore, user, isUserLoading: isAuthLoading } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
 
   const lessonRef = useMemoFirebase(() => {
@@ -88,9 +88,9 @@ export default function EditLessonPage() {
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
   
   const blocksQuery = useMemoFirebase(() => {
-      if(!courseRef) return null;
+      if(isAuthLoading || !courseRef) return null;
       return query(collection(courseRef, 'blocks'));
-  }, [courseRef]);
+  }, [courseRef, isAuthLoading]);
   const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -441,3 +441,5 @@ export default function EditLessonPage() {
     </>
   );
 }
+
+    
