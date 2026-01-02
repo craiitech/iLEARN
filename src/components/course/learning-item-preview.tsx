@@ -1,7 +1,6 @@
 
 "use client";
 
-import { useState } from "react";
 import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import Link from "next/link";
@@ -14,13 +13,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2, Pencil, ExternalLink } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { getEditUrl, type LearningPathItem } from "@/app/teacher/courses/[courseId]/page";
 import { Checkbox } from "../ui/checkbox";
-import { Label } from "../ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 
 type LearningItemPreviewDialogProps = {
   item: LearningPathItem | null;
@@ -52,14 +50,14 @@ export function LearningItemPreviewDialog({ item, courseId, open, onOpenChange }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-2xl">{item?.title}</DialogTitle>
           <DialogDescription>
             Previewing '{item?.type}' from the learning path.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh] pr-6">
+        <ScrollArea className="max-h-[70vh] pr-6">
             <div className="py-4 space-y-6">
             {isLoading && (
                 <div className="flex justify-center items-center h-48">
@@ -100,19 +98,73 @@ function Section({ title, children }: { title: string, children: React.ReactNode
     return (
         <div className="space-y-2">
             <h3 className="text-lg font-semibold text-primary">{title}</h3>
-            <div className="text-sm text-muted-foreground prose prose-sm max-w-none">{children}</div>
+            <div className="text-sm text-muted-foreground prose prose-sm max-w-none dark:prose-invert">{children}</div>
             <Separator/>
         </div>
     )
 }
 
+function getYouTubeEmbedUrl(url: string) {
+    try {
+        const urlObj = new URL(url);
+        let videoId = urlObj.searchParams.get('v');
+        if (urlObj.hostname === 'youtu.be') {
+            videoId = urlObj.pathname.slice(1);
+        }
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    } catch {
+        return null;
+    }
+}
+
+function getGoogleDocsEmbedUrl(url: string) {
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes('google.com')) {
+             // Change /edit to /preview for a cleaner view
+            return url.replace(/\/edit.*$/, '/preview');
+        }
+        return url; // Return original if not a google doc link we can handle
+    } catch {
+        return url;
+    }
+}
+
+
 function LessonPreviewContent({ lesson }: { lesson: any }) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             <Section title="Grading Period"><p>{lesson.gradingPeriod}</p></Section>
             <Section title="Learning Outcome"><p>{lesson.learningOutcome}</p></Section>
             <Section title="Objectives"><div dangerouslySetInnerHTML={{ __html: lesson.objectives?.replace(/\n/g, '<br/>') }} /></Section>
-            <Section title="Lesson Content"><div dangerouslySetInnerHTML={{ __html: lesson.content?.replace(/\n/g, '<br/>') }} /></Section>
+            
+            <div>
+                 <h3 className="text-lg font-semibold text-primary mb-2">Lesson Content</h3>
+                {lesson.contentType === 'text' && (
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: lesson.contentValue?.replace(/\n/g, '<br/>') }} />
+                )}
+                {lesson.contentType === 'youtube' && getYouTubeEmbedUrl(lesson.contentValue) && (
+                    <div className="aspect-video">
+                        <iframe
+                            className="w-full h-full rounded-lg"
+                            src={getYouTubeEmbedUrl(lesson.contentValue) || ''}
+                            title="YouTube video player"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                )}
+                {(lesson.contentType === 'pdf' || lesson.contentType === 'presentation') && (
+                     <div className="aspect-[4/3]">
+                        <iframe
+                            src={getGoogleDocsEmbedUrl(lesson.contentValue)}
+                            className="w-full h-full rounded-lg border"
+                        ></iframe>
+                    </div>
+                )}
+            </div>
+             <Separator/>
+
             {lesson.sdgIntegration && <Section title="SDG Integration"><p>{lesson.sdgIntegration}</p></Section>}
             {lesson.internationalization && <Section title="Internationalization"><p>{lesson.internationalization}</p></Section>}
         </div>
@@ -151,7 +203,7 @@ function AssignmentPreviewContent({ assignment }: { assignment: any }) {
     }, 0) || assignment.pointsPossible || 0;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             <div className="flex justify-between items-baseline">
                 <Section title="Grading Period"><p>{assignment.gradingPeriod}</p></Section>
                 <p className="text-lg font-bold">Total Points: <span className="text-primary">{totalPoints}</span></p>
@@ -198,5 +250,3 @@ function AssignmentPreviewContent({ assignment }: { assignment: any }) {
         </div>
     )
 }
-
-    

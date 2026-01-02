@@ -390,12 +390,17 @@
             "type": "string",
             "description": "Description of the internationalization aspects of the lesson."
         },
-        "content": {
+        "contentType": {
           "type": "string",
-          "description": "The main content of the lesson in Markdown format."
+          "description": "The type of content for the lesson.",
+          "enum": ["text", "pdf", "presentation", "youtube"]
+        },
+        "contentValue": {
+          "type": "string",
+          "description": "The main content of the lesson, either rich text or a URL."
         }
       },
-      "required": ["id", "courseId", "title", "learningOutcome", "objectives", "content"]
+      "required": ["id", "courseId", "title", "learningOutcome", "objectives", "contentType", "contentValue"]
     }
   },
   "auth": {
@@ -480,5 +485,3 @@
     ]
   }
 }
-
-    
