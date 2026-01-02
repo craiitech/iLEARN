@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, GripVertical, FileText, FileQuestion, Pencil, Trash2, PlusCircle, ExternalLink, Loader2, BookCopy, ChevronsUpDown, Eye } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { doc, collection, query, orderBy } from "firebase/firestore";
@@ -33,6 +32,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
+import { LearningItemPreviewDialog } from "@/components/course/learning-item-preview";
 
 
 const typeIcons = {
@@ -52,7 +52,7 @@ export type LearningPathItem = {
     gradingPeriod: string;
 }
 
-function getEditUrl(courseId: string, item: LearningPathItem) {
+export function getEditUrl(courseId: string, item: LearningPathItem) {
     switch (item.type) {
         case 'Lesson':
             return `/teacher/courses/${courseId}/lessons/${item.id}/edit`;
@@ -74,6 +74,7 @@ export default function CourseDetailPage() {
     const courseId = params.courseId as string;
     const [isPolicyOpen, setIsPolicyOpen] = useState(true);
     const [itemToDelete, setItemToDelete] = useState<LearningPathItem | null>(null);
+    const [previewItem, setPreviewItem] = useState<LearningPathItem | null>(null);
     const { toast } = useToast();
 
     const courseRef = useMemoFirebase(() => {
@@ -189,7 +190,7 @@ export default function CourseDetailPage() {
     }
     
     const orderedTerms = course?.gradingPolicy?.map((p: any) => p.term) || [];
-    const allTerms = [...orderedTerms, ...Object.keys(learningPathByTerm).filter(term => !orderedTerms.includes(term))];
+    const allTerms = [...new Set([...orderedTerms, ...Object.keys(learningPathByTerm)])];
 
 
     return (
@@ -303,9 +304,14 @@ export default function CourseDetailPage() {
                                        <Loader2 className="h-8 w-8 animate-spin text-primary"/>
                                        <p className="text-muted-foreground text-sm">Loading curriculum...</p>
                                    </div>
-                                ) : Object.keys(learningPathByTerm).length > 0 ? (
+                                ) : allTerms.every(term => !learningPathByTerm[term] || learningPathByTerm[term].length === 0) ? (
+                                    <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
+                                       <h3 className="text-lg font-semibold">Empty Learning Path</h3>
+                                       <p className="text-muted-foreground text-sm">Add lessons, quizzes, and assignments to build the curriculum.</p>
+                                   </div>
+                                ) : (
                                     <Accordion type="multiple" className="w-full" defaultValue={allTerms}>
-                                        {allTerms.map(term => learningPathByTerm[term] && (
+                                        {allTerms.map(term => learningPathByTerm[term] && learningPathByTerm[term].length > 0 && (
                                             <AccordionItem value={term} key={term}>
                                                 <AccordionTrigger className="text-lg font-semibold">{term}</AccordionTrigger>
                                                 <AccordionContent>
@@ -317,6 +323,10 @@ export default function CourseDetailPage() {
                                                               <span className="flex-grow font-medium">{item.title}</span>
                                                               <span className="text-sm text-muted-foreground">{item.type}</span>
                                                               <div className="flex items-center gap-2">
+                                                                  <Button variant="outline" size="sm" onClick={() => setPreviewItem(item)}>
+                                                                      <Eye className="mr-2 h-4 w-4" />
+                                                                      Preview
+                                                                  </Button>
                                                                   <Button variant="ghost" size="icon" asChild>
                                                                     <Link href={getEditUrl(courseId, item)}>
                                                                         <Pencil className="h-4 w-4" />
@@ -335,11 +345,6 @@ export default function CourseDetailPage() {
                                             </AccordionItem>
                                         ))}
                                     </Accordion>
-                                ) : (
-                                    <div className="text-center p-8 flex flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed">
-                                       <h3 className="text-lg font-semibold">Empty Learning Path</h3>
-                                       <p className="text-muted-foreground text-sm">Add lessons, quizzes, and assignments to build the curriculum.</p>
-                                   </div>
                                 )}
                         </CardContent>
                     </Card>
@@ -382,7 +387,21 @@ export default function CourseDetailPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            {previewItem && courseRef && (
+                 <LearningItemPreviewDialog
+                    item={previewItem}
+                    courseId={courseId}
+                    open={!!previewItem}
+                    onOpenChange={(isOpen) => {
+                        if (!isOpen) {
+                            setPreviewItem(null);
+                        }
+                    }}
+                 />
+            )}
         </div>
     );
 }
 
+    
