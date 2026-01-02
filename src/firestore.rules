@@ -1,0 +1,109 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isTeacher() {
+      // In a real app, you'd check a custom claim or a 'roles' document.
+      // For this MVP, we assume any signed-in user might be a teacher.
+      return isSignedIn();
+    }
+    
+    function isTeacherOwner(teacherId) {
+        return isSignedIn() && request.auth.uid == teacherId;
+    }
+
+    function isImmutable(fieldName) {
+      return request.resource.data[fieldName] == resource.data[fieldName];
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; 
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && resource != null && isImmutable('id');
+      allow delete: if isOwner(userId) && resource != null;
+
+      match /enrollments/{enrollmentId} {
+        // A student can create and read their own enrollment records.
+        allow create: if isOwner(userId) && request.resource.data.studentId == userId;
+        allow get, list: if isOwner(userId);
+        // Nobody can update or delete an enrollment for now to maintain record integrity.
+        allow update, delete: if false;
+      }
+    }
+
+    match /users/{teacherId}/courses/{courseId} {
+        allow get, list: if isTeacherOwner(teacherId);
+        allow create: if isTeacherOwner(teacherId) && request.resource.data.teacherId == teacherId;
+        allow update: if isTeacherOwner(teacherId) && resource != null && isImmutable('teacherId');
+        allow delete: if isTeacherOwner(teacherId);
+
+        match /blocks/{blockId} {
+          allow get, list, create: if isTeacherOwner(teacherId);
+          allow update, delete: if isTeacherOwner(teacherId) && resource != null;
+        }
+
+        match /lessons/{lessonId} {
+          allow get, list, create, update, delete: if isTeacherOwner(teacherId);
+        }
+
+        match /assignments/{assignmentId} {
+          allow get, list, create: if isTeacherOwner(teacherId);
+          allow update, delete: if isTeacherOwner(teacherId) && resource != null;
+        }
+
+        match /quizzes/{quizId} {
+          allow get, list, create: if isTeacherOwner(teacherId);
+          allow update, delete: if isTeacherOwner(teacherId) && resource != null;
+
+          match /questions/{questionId} {
+             allow get, list, create, update, delete: if isTeacherOwner(teacherId);
+          }
+        }
+    }
+
+    match /submissions/{submissionId} {
+      function isStudentOwner() {
+        return isOwner(resource.data.userId);
+      }
+      function isAssignmentTeacher() {
+        // This checks the teacherId on the document being accessed
+        return isSignedIn() && resource.data.teacherId == request.auth.uid;
+      }
+       function isCreatingOwnSubmission() {
+        return isOwner(request.resource.data.userId);
+      }
+
+      // Allow a user to read a submission if they are the student who owns it,
+      // OR if they are the teacher assigned to it.
+      allow get: if isStudentOwner() || isAssignmentTeacher();
+      
+      // Allow a teacher to list submissions, but security is enforced by the query in the app code
+      // which MUST include `where('teacherId', '==', request.auth.uid)`.
+      allow list: if isTeacher();
+
+      allow create: if isCreatingOwnSubmission();
+      
+      // Only the assigned teacher can grade/update the submission.
+      allow update: if isAssignmentTeacher(); 
+      
+      allow delete: if false; // Nobody can delete a submission record.
+    }
+
+    // This rule allows a collection group query on 'blocks' by any signed-in user.
+    // The query in the app MUST be secured with a 'where' clause. This is necessary
+    // for the student to be able to find a block by its code.
+    match /{path=**}/blocks/{blockId} {
+        allow get: if isSignedIn();
+    }
+  }
+}

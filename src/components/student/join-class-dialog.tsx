@@ -27,6 +27,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
+import { useFirebase } from "@/firebase";
+import { collectionGroup, getDocs, query, where, collection, addDoc } from "firebase/firestore";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useRouter } from "next/navigation";
+
 
 const formSchema = z.object({
   blockCode: z.string().min(3, "Block code must be at least 3 characters long."),
@@ -36,6 +41,8 @@ export function JoinClassDialog() {
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { firestore, user } = useFirebase();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,26 +51,70 @@ export function JoinClassDialog() {
     },
   });
 
-  // In a real app, this function would find the block by its code and create an enrollment record.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    console.log("Attempting to join block with code:", values.blockCode);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Here you would add the logic to find the block and enroll the user.
-    // For now, we'll just show a success toast.
     
-    setIsSaving(false);
-    setOpen(false);
-    toast({
-      title: "Successfully Joined Class!",
-      description: `You are now enrolled in block ${values.blockCode}.`,
-    });
-    form.reset();
+    if (!firestore || !user) {
+        toast({ variant: "destructive", title: "You must be logged in to join a class."});
+        setIsSaving(false);
+        return;
+    }
 
-    // You would likely want to refresh the page or re-fetch data here.
+    try {
+        // Query the 'blocks' collection group to find the block with the matching code
+        const blocksRef = collectionGroup(firestore, 'blocks');
+        const q = query(blocksRef, where("blockCode", "==", values.blockCode));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            toast({
+                variant: "destructive",
+                title: "Class Not Found",
+                description: "No class found with that block code. Please check the code and try again.",
+            });
+        } else {
+            const blockDoc = querySnapshot.docs[0];
+            const blockData = blockDoc.data();
+
+            // The block's parent is the course, and the course's parent is the teacher (user)
+            const courseRef = blockDoc.ref.parent.parent;
+            if (!courseRef) {
+                 throw new Error("Could not find parent course for this block.");
+            }
+            const teacherId = courseRef.parent.id;
+
+            // Create the enrollment document
+            const enrollmentsCollection = collection(firestore, `users/${user.uid}/enrollments`);
+            await addDoc(enrollmentsCollection, {
+                studentId: user.uid,
+                blockId: blockDoc.id,
+                courseId: blockData.courseId,
+                teacherId: teacherId, // teacher who owns the course
+                enrollmentDate: new Date(),
+            });
+
+            toast({
+                title: "Successfully Joined Class!",
+                description: `You are now enrolled in block ${values.blockCode}.`,
+            });
+
+            form.reset();
+            setOpen(false);
+            
+            // Refresh the page to show the new enrollment status
+            router.refresh();
+        }
+
+    } catch (error) {
+        console.error("Error joining class:", error);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Could not join the class. Please try again.",
+        });
+    } finally {
+        setIsSaving(false);
+    }
   }
 
   return (
