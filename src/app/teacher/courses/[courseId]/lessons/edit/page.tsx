@@ -73,11 +73,12 @@ export default function EditLessonPage() {
     },
   });
 
+  const { reset } = form;
   useEffect(() => {
     if (lesson) {
-      form.reset(lesson);
+      reset(lesson);
     }
-  }, [lesson, form.reset]);
+  }, [lesson, reset]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!lessonRef) {
