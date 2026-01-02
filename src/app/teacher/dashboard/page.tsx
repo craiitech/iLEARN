@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowUpRight, Book, FileCheck, PlusCircle, Users, Loader2, Library } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, collectionGroup } from "firebase/firestore";
 import { formatDistanceToNow } from 'date-fns';
 
 export default function TeacherDashboard() {
@@ -20,12 +20,9 @@ export default function TeacherDashboard() {
 
   const quizzesQuery = useMemoFirebase(() => {
     if (!user) return null;
-    // This is a simplification. A real app might query across all subcollections.
-    // For now, let's just show recent quizzes from a specific (or first) course if possible
-    // but the data model does not support this well without collectionGroup queries which are more complex.
-    // We will query all quizzes across all courses.
     return query(
-      collection(firestore, `users/${user.uid}/quizzes`), 
+      collectionGroup(firestore, 'quizzes'), 
+      where('teacherId', '==', user.uid),
       orderBy('createdAt', 'desc'), 
       limit(2)
     );
@@ -162,7 +159,7 @@ export default function TeacherDashboard() {
                                 {sub.assignmentTitle || "Unknown Assignment"}
                             </TableCell>
                              <TableCell className="text-right">
-                                {sub.submissionTime ? formatDistanceToNow(new Date(sub.submissionTime), { addSuffix: true }) : 'N/A'}
+                                {sub.submissionTime ? formatDistanceToNow(new Date(sub.submissionTime.toDate()), { addSuffix: true }) : 'N/A'}
                             </TableCell>
                         </TableRow>
                     ))}
@@ -214,3 +211,5 @@ export default function TeacherDashboard() {
     </>
   )
 }
+
+    
