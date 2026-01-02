@@ -68,8 +68,10 @@ service cloud.firestore {
       allow get: if isOwner(resource.data.studentId);
       // A student can create their own enrollment.
       allow create: if isOwner(request.resource.data.studentId);
+      
       // A teacher can list enrollments if the query filters by their teacherId.
-      allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
+      // This is the correct and secure way to enforce query constraints.
+      allow list: if isTeacher() && request.query.filters.size() == 2 && 'teacherId' in request.query.filters[0].field && request.query.filters[0].value == request.auth.uid;
 
       allow update, delete: if false;
     }
@@ -91,7 +93,8 @@ service cloud.firestore {
       allow get: if isStudentOwner() || isAssignmentTeacher();
       
       // Allow a teacher to list submissions ONLY IF the query filters by their teacher ID.
-      allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
+      // This is the correct syntax for enforcing a where clause.
+      allow list: if isTeacher() && request.query.filters.size() > 0 && 'teacherId' in request.query.filters[0].field && request.query.filters[0].value == request.auth.uid;
 
       allow create: if isCreatingOwnSubmission();
       

@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { useFirebase } from '@/firebase/provider'; // Import useFirebase
+import { useFirebase } from '@/firebase/provider';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -27,15 +27,12 @@ export interface UseCollectionResult<T> {
 }
 
 /**
- * A type guard to check if a query object has the internal _query structure.
- * This helps in safely accessing nested properties for path extraction.
+ * A type guard to check if an object is a Query.
+ * Firestore Queries have a `ref` property pointing to the CollectionReference.
  */
-function isQueryWithInternalPath(
-  query: any
-): query is { _query: { path: { toSegments: () => string[] } } } {
-  return query && typeof query === 'object' && '_query' in query && 'path' in query._query && typeof query._query.path.toSegments === 'function';
+function isQuery(obj: any): obj is Query {
+    return obj && typeof obj.ref === 'object' && typeof obj.ref.path === 'string';
 }
-
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
@@ -88,11 +85,13 @@ export function useCollection<T = any>(
       (error: FirestoreError) => {
         let path = 'unknown/path';
         try {
-           if ('path' in memoizedTargetRefOrQuery) {
+           // This is the robust way to get the path.
+           // For a CollectionReference, .path is available directly.
+           // For a Query, its .ref property points to the CollectionReference.
+           if (isQuery(memoizedTargetRefOrQuery)) {
+              path = memoizedTargetRefOrQuery.ref.path;
+           } else if ('path' in memoizedTargetRefOrQuery) {
               path = (memoizedTargetRefOrQuery as CollectionReference).path;
-           } else if (isQueryWithInternalPath(memoizedTargetRefOrQuery)) {
-              // For queries, extract path from internal _query property
-              path = memoizedTargetRefOrQuery._query.path.toSegments().join('/');
            }
         } catch (e) {
             console.error("Could not determine path for Firestore error reporting:", e);
