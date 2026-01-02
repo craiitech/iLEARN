@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -95,18 +96,10 @@ export default function TeacherLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton href="/teacher/courses" asChild tooltip="Courses" >
+              <SidebarMenuButton href="/teacher/courses" asChild tooltip="Courses" isActive>
                 <Link href="/teacher/courses">
                   <Library />
                   <span>Courses</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/teacher/blocks" asChild tooltip="Blocks" isActive>
-                <Link href="/teacher/blocks">
-                  <Book />
-                  <span>Blocks</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
