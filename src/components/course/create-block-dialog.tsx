@@ -29,10 +29,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, DocumentReference } from "firebase/firestore";
+import { collection, DocumentReference, getDocs, query, where, collectionGroup } from "firebase/firestore";
+import { useFirebase } from "@/firebase";
 
 const formSchema = z.object({
-  blockCode: z.string().min(3, "Code must be at least 3 characters.").max(15, "Code cannot exceed 15 characters."),
   schedule: z.string().min(5, "Schedule must be at least 5 characters."),
 });
 
@@ -40,15 +40,31 @@ type CreateBlockDialogProps = {
     courseRef: DocumentReference;
 }
 
+// Function to generate a random, easy-to-read 6-character code (e.g., AB-12-CD)
+function generateBlockCode() {    
+    const chars = "ABCDEFGHIJKLMNPQRSTUVWXYZ"; // Omitting O
+    const nums = "123456789"; // Omitting 0
+
+    const randomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
+    const randomNum = () => nums.charAt(Math.floor(Math.random() * nums.length));
+
+    const part1 = randomChar() + randomChar();
+    const part2 = randomNum() + randomNum();
+    const part3 = randomChar() + randomChar();
+
+    return `${part1}-${part2}-${part3}`;
+}
+
+
 export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { firestore } = useFirebase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      blockCode: "",
       schedule: "",
     },
   });
@@ -56,16 +72,37 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
     try {
+      let newBlockCode = "";
+      let isCodeUnique = false;
+      let attempts = 0;
+
+      // Attempt to generate a unique code up to 5 times
+      while (!isCodeUnique && attempts < 5) {
+        newBlockCode = generateBlockCode();
+        const blocksRef = collectionGroup(firestore, 'blocks');
+        const q = query(blocksRef, where("blockCode", "==", newBlockCode));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          isCodeUnique = true;
+        }
+        attempts++;
+      }
+
+      if (!isCodeUnique) {
+          throw new Error("Could not generate a unique block code. Please try again.");
+      }
+
       const blocksCollection = collection(courseRef, 'blocks');
       await addDocumentNonBlocking(blocksCollection, {
         ...values,
+        blockCode: newBlockCode,
         courseId: courseRef.id,
         createdAt: new Date(),
       });
       
       toast({
         title: "Block Created!",
-        description: `The block "${values.blockCode}" has been successfully created.`,
+        description: `The block has been created with code: ${newBlockCode}.`,
       });
 
       form.reset();
@@ -76,7 +113,7 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: "Could not create the block. Please try again.",
+        description: (error as Error).message || "Could not create the block. Please try again.",
       });
     } finally {
         setIsSaving(false);
@@ -95,27 +132,11 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
         <DialogHeader>
           <DialogTitle>Create New Block</DialogTitle>
           <DialogDescription>
-            Create a new section for this course with its own schedule and student roster.
+            Create a new section for this course. A unique block code will be automatically generated.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-              <FormField
-                control={form.control}
-                name="blockCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Block Code</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., ENG101-S1, BIO-LAB-A" {...field} />
-                    </FormControl>
-                     <FormDescription>
-                      A unique code for this specific section.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="schedule"
@@ -123,10 +144,10 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
                   <FormItem>
                     <FormLabel>Schedule</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., MWF 10:00 AM - 11:00 AM" {...field} />
+                      <Textarea placeholder="e.g., MWF 10:00 AM - 11:00 AM, Room 101" {...field} />
                     </FormControl>
                      <FormDescription>
-                      Enter each schedule on a new line.
+                      Enter the class schedule. You can add room details too.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
