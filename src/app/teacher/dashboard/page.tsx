@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowUpRight, Book, FileCheck, PlusCircle, Users, Loader2, Library } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, limit } from "firebase/firestore";
 import { formatDistanceToNow } from 'date-fns';
 
 export default function TeacherDashboard() {
@@ -25,7 +25,6 @@ export default function TeacherDashboard() {
     // A more robust implementation might be needed for a full-featured quiz list.
     const courseQuizzesQuery = query(
       collection(firestore, `users/${user.uid}/courses`),
-      orderBy('createdAt', 'desc'),
       limit(1)
     );
     // This is not ideal, as it makes assumptions, but it's a way to show *some* quizzes.
@@ -53,9 +52,9 @@ export default function TeacherDashboard() {
   const { data: submissions, isLoading: submissionsLoading } = useCollection(submissionsQuery);
   
   const sortedSubmissions = submissions?.sort((a, b) => {
-      const timeA = a.submissionTime?.toDate() || 0;
-      const timeB = b.submissionTime?.toDate() || 0;
-      return (timeB as number) - (timeA as number);
+      const timeA = a.submissionTime?.toDate ? a.submissionTime.toDate().getTime() : 0;
+      const timeB = b.submissionTime?.toDate ? b.submissionTime.toDate().getTime() : 0;
+      return timeB - timeA;
   });
 
   const submissionsToGrade = submissions?.filter(s => !s.grade).length || 0;
@@ -175,7 +174,7 @@ export default function TeacherDashboard() {
                             </TableCell>
                              <TableCell className="text-right">
                                 {sub.submissionTime ? formatDistanceToNow(new Date(sub.submissionTime.toDate()), { addSuffix: true }) : 'N/A'}
-                            </TableCell>
+                             </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
@@ -226,3 +225,5 @@ export default function TeacherDashboard() {
     </>
   )
 }
+
+    
