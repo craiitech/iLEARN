@@ -456,16 +456,6 @@
         }
       },
       {
-        "path": "/users/{studentId}/enrollments/{enrollmentId}",
-        "definition": {
-            "entityName": "Enrollment",
-            "schema": {
-                "$ref": "#/entities/Enrollment"
-            },
-            "description": "Stores records of which students are in which blocks."
-        }
-      },
-      {
         "path": "/users/{teacherId}/courses/{courseId}",
         "definition": {
           "entityName": "Course",
@@ -513,6 +503,16 @@
             "$ref": "#/entities/Quiz"
           },
           "description": "Stores quiz templates for a course."
+        }
+      },
+       {
+        "path": "/enrollments/{enrollmentId}",
+        "definition": {
+            "entityName": "Enrollment",
+            "schema": {
+                "$ref": "#/entities/Enrollment"
+            },
+            "description": "Top-level collection to store records of which students are in which blocks for query efficiency."
         }
       },
       {

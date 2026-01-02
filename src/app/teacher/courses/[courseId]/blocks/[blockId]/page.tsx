@@ -9,7 +9,7 @@ import { ArrowLeft, Loader2, Users, ClipboardCopy } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useFirebase, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, collection, query, where, collectionGroup } from "firebase/firestore";
+import { doc, collection, query, where } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,9 +29,9 @@ function BlockDetailPage() {
 
     const enrollmentsQuery = useMemoFirebase(() => {
         if (!firestore || !user || !blockId) return null;
-        // This query now includes the teacherId to satisfy security rules.
+        // Query the top-level 'enrollments' collection
         return query(
-            collectionGroup(firestore, "enrollments"),
+            collection(firestore, "enrollments"),
             where("blockId", "==", blockId),
             where("teacherId", "==", user.uid)
         );
@@ -152,14 +152,8 @@ function BlockDetailPage() {
     )
 }
 
-// CollectionGroup queries for enrollments require a composite index in firestore.
-// In a real app, you would create this in the Firebase console.
-// The error message from Firestore in the browser console will provide a direct link to create it.
-// For example: `Firestore (9.1.0): Uncaught Error In snapshot listener: The query requires an index...`
 function BlockPage() {
     return <BlockDetailPage />;
 }
 
 export default BlockPage;
-
-    

@@ -63,6 +63,18 @@ service cloud.firestore {
         }
     }
 
+    match /enrollments/{enrollmentId} {
+      // A student can read their own enrollment document.
+      allow get: if isOwner(resource.data.studentId);
+      // A student can create their own enrollment.
+      allow create: if isOwner(request.resource.data.studentId);
+      // A teacher can list enrollments if the query filters by their teacherId.
+      // This is crucial for securely fetching students for a block.
+      allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
     match /submissions/{submissionId} {
       function isStudentOwner() {
         return isOwner(resource.data.userId);
@@ -98,17 +110,5 @@ service cloud.firestore {
         allow get: if isSignedIn();
     }
     
-    // This rule allows a collection group query on 'enrollments'
-    match /{path=**}/enrollments/{enrollmentId} {
-        // A student can read their own enrollments.
-        allow get: if isOwner(resource.data.studentId);
-        
-        // A student can create their own enrollment.
-        allow create: if isOwner(request.resource.data.studentId);
-        
-        // A teacher can list enrollments for a block they own.
-        // This relies on the query including `where('teacherId', '==', request.auth.uid)`
-        allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
-    }
   }
 }

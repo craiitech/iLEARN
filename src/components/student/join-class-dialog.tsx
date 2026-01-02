@@ -80,15 +80,16 @@ export function JoinClassDialog() {
             if (!courseRef) {
                  throw new Error("Could not find parent course for this block.");
             }
-            const teacherId = courseRef.parent.id;
+            // The teacherId is the ID of the user who owns the course.
+            const teacherId = courseRef.path.split('/')[1];
 
-            // Create the enrollment document
+            // Create the enrollment document in the top-level 'enrollments' collection
             const enrollmentsCollection = collection(firestore, 'enrollments');
             await addDoc(enrollmentsCollection, {
                 studentId: user.uid,
                 blockId: blockDoc.id,
                 courseId: blockData.courseId,
-                teacherId: teacherId, // teacher who owns the course
+                teacherId: teacherId, 
                 enrollmentDate: new Date(),
             });
 
