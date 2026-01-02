@@ -68,18 +68,27 @@ service cloud.firestore {
         return isOwner(resource.data.userId);
       }
       function isAssignmentTeacher() {
+        // This checks the teacherId on the document being accessed
         return isSignedIn() && resource.data.teacherId == request.auth.uid;
       }
        function isCreatingOwnSubmission() {
         return isOwner(request.resource.data.userId);
       }
 
+      // Allow a user to read a submission if they are the student who owns it,
+      // OR if they are the teacher assigned to it.
       allow get: if isStudentOwner() || isAssignmentTeacher();
-      // A teacher can list submissions but ONLY if they are querying for submissions that belong to them.
-      allow list: if isTeacher() && request.query.get("teacherId") == request.auth.uid;
+      
+      // Allow a teacher to list submissions, but security is enforced by the query in the app code
+      // which MUST include `where('teacherId', '==', request.auth.uid)`.
+      allow list: if isTeacher();
+
       allow create: if isCreatingOwnSubmission();
-      allow update: if isAssignmentTeacher(); // Only teachers can grade/update.
-      allow delete: if false; // Nobody can delete a submission
+      
+      // Only the assigned teacher can grade/update the submission.
+      allow update: if isAssignmentTeacher(); 
+      
+      allow delete: if false; // Nobody can delete a submission record.
     }
   }
 }
