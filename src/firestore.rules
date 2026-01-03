@@ -72,9 +72,9 @@ service cloud.firestore {
       // A student can create their own enrollment.
       allow create: if isOwner(request.resource.data.studentId);
       
-      // A student can list their OWN enrollments.
-      // A teacher can list enrollments for their classes.
-      allow list: if (isOwner(request.query.where.studentId)) || (isTeacher() && request.query.where.teacherId == request.auth.uid);
+      // A teacher can list enrollments if the query filters by their teacherId.
+      // A student can list their OWN enrollments by filtering by their studentId.
+      allow list: if (isTeacher() && request.query.where.teacherId == request.auth.uid) || (isOwner(request.query.where.studentId));
 
       allow update, delete: if false;
     }
