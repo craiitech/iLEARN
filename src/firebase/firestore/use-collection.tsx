@@ -66,7 +66,6 @@ export function useCollection<T = any>(
     }
     
     // Create a stable reference to the query for use inside the callbacks.
-    // This prevents race conditions where the outer variable might change.
     const stableQueryRef = memoizedTargetRefOrQuery;
 
     const unsubscribe = onSnapshot(
@@ -87,7 +86,7 @@ export function useCollection<T = any>(
         try {
             if (isQuery(stableQueryRef)) {
                 path = stableQueryRef.ref.path;
-            } else if ('path' in stableQueryRef) {
+            } else if (stableQueryRef && 'path' in stableQueryRef) {
                 path = (stableQueryRef as CollectionReference).path;
             }
         } catch (e) {

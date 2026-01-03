@@ -45,13 +45,13 @@ export function useDoc<T = any>(
   const [data, setData] = useState<StateDataType>(null);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
   const { isUserLoading } = useFirebase();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // isLoading is true if we are waiting for auth or if the doc ref is not ready.
-  const isLoading = isUserLoading || !memoizedDocRef;
 
   useEffect(() => {
     // Do not proceed if the doc ref is not ready or auth is in progress.
     if (!memoizedDocRef || isUserLoading) {
+      setIsLoading(true);
       setData(null);
       setError(null);
       return;
@@ -70,15 +70,26 @@ export function useDoc<T = any>(
           setData(null);
         }
         setError(null); // Clear any previous error on successful snapshot
+        setIsLoading(false);
       },
       (snapshotError: FirestoreError) => {
+        let path = 'unknown/path';
+        try {
+            if (stableDocRef && 'path' in stableDocRef) {
+                path = stableDocRef.path;
+            }
+        } catch (e) {
+            console.error("useDoc: Could not determine path for Firestore error reporting:", e);
+        }
+        
         const contextualError = new FirestorePermissionError({
           operation: 'get',
-          path: stableDocRef.path, // Safely access path from the stable reference
+          path,
         })
 
         setError(contextualError);
         setData(null);
+        setIsLoading(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
@@ -89,5 +100,5 @@ export function useDoc<T = any>(
     return () => unsubscribe();
   }, [memoizedDocRef, isUserLoading]); // Re-run effect if docRef or user loading state changes.
 
-  return { data, isLoading, error };
+  return { data, isLoading: isLoading || isUserLoading, error };
 }
