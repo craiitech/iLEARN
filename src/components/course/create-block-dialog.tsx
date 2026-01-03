@@ -59,7 +59,7 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
       // The block code will now be generated on demand from the block management page.
       await addDocumentNonBlocking(blocksCollection, {
         ...values,
-        blockCode: null, // Initially null
+        blockCode: null, // Ensure blockCode is explicitly null on creation
         courseId: courseRef.id,
         createdAt: new Date(),
       });
