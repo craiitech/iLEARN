@@ -8,7 +8,7 @@ import { ArrowLeft, Loader2, ClipboardCopy, Eye } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase";
-import { doc, collectionGroup, query, where, getDocs } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { EditBlockForm } from "@/components/course/edit-block-form";
 
@@ -49,33 +49,16 @@ function BlockDetailPage() {
         }
     };
 
-    const handleRevealCode = async () => {
+    const handleRevealCode = () => {
         if (block?.blockCode) return; // If code exists, do nothing.
         if (!blockRef) return;
 
         setIsRevealingCode(true);
         try {
-            let newBlockCode = "";
-            let isCodeUnique = false;
-            let attempts = 0;
-
-            // Attempt to generate a unique code up to 10 times
-            while (!isCodeUnique && attempts < 10) {
-                newBlockCode = generateBlockCode();
-                const blocksRef = collectionGroup(firestore, 'blocks');
-                const q = query(blocksRef, where("blockCode", "==", newBlockCode));
-                const querySnapshot = await getDocs(q);
-                if (querySnapshot.empty) {
-                isCodeUnique = true;
-                }
-                attempts++;
-            }
-
-            if (!isCodeUnique) {
-                throw new Error("Could not generate a unique block code after several attempts. Please try again.");
-            }
-
+            const newBlockCode = generateBlockCode();
+            
             updateDocumentNonBlocking(blockRef, { blockCode: newBlockCode });
+            
             toast({
                 title: "Block Code Generated",
                 description: `New code is: ${newBlockCode}`
@@ -88,7 +71,9 @@ function BlockDetailPage() {
                 description: (error as Error).message,
             });
         } finally {
-            setIsRevealingCode(false);
+            // The optimistic update will trigger a re-render from useDoc, 
+            // so we don't need to manually set isRevealingCode to false here.
+            // It will happen automatically when the new block data arrives.
         }
     }
 
