@@ -42,21 +42,22 @@ export default function StudentLayout({
   const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
 
   useEffect(() => {
-    // If auth state is not loading and there's no user, the AuthHandler will redirect.
-    if (!isUserLoading && !user) {
-      return; 
+    // This effect now only handles role-based authorization for this specific layout.
+    // Global redirection (e.g., for unauthenticated users) is handled by AuthHandler.
+    if (isUserLoading || (user && isUserDocLoading)) {
+      return; // Wait for all auth/user data to be loaded
     }
 
-    // After user object and its corresponding document are loaded...
-    if (user && !isUserDocLoading && userData) {
+    if (user && userData) {
       if (userData.role === 'student') {
          setIsAuthorized(true);
       } else {
-        // If not a student, redirect to the appropriate dashboard
-        // The AuthHandler also does this, but this provides an extra layer of security.
-        router.push(`/${userData.role}/dashboard`);
+        // If the user is logged in but not a student, redirect them away.
+        router.replace(`/${userData.role || 'teacher'}/dashboard`);
       }
     }
+    // No need for an 'else' here, as AuthHandler will redirect unauthenticated users.
+
   }, [user, isUserLoading, userData, isUserDocLoading, router]);
 
   // While loading authentication state or user role, show a full-page loader.

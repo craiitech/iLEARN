@@ -21,25 +21,26 @@ export function AuthHandler() {
 
   useEffect(() => {
     const isAuthPage = pathname === '/login';
+    const isLandingPage = pathname === '/';
     
     // Wait until we have all the user information.
-    if (isUserLoading || isUserDocLoading) {
+    if (isUserLoading || (user && isUserDocLoading)) {
       return;
     }
 
     if (user && userData) {
-        // If the user is logged in and on the login page, redirect them.
-        if (isAuthPage) {
+        // If the user is logged in and on the login/landing page, redirect them to their dashboard.
+        if (isAuthPage || isLandingPage) {
             const { role } = userData;
             if (role === 'teacher') {
-                router.push('/teacher/dashboard');
+                router.replace('/teacher/dashboard');
             } else if (role === 'student') {
-                router.push('/student/dashboard');
+                router.replace('/student/dashboard');
             }
         }
-    } else if (!user && !isAuthPage) {
-        // If the user is not logged in and not on the login page, send them to login.
-        router.push('/login');
+    } else if (!user && !isAuthPage && !isLandingPage) {
+        // If the user is not logged in and not on a public page, send them to login.
+        router.replace('/login');
     }
 
   }, [user, userData, isUserLoading, isUserDocLoading, pathname, router]);
