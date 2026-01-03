@@ -8,12 +8,13 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   User,
+  FirebaseApp,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
 
-async function createUserProfile(user: User, role: 'teacher' | 'student') {
-    const db = getFirestore(user.provider.app);
+async function createUserProfile(app: FirebaseApp, user: User, role: 'teacher' | 'student') {
+    const db = getFirestore(app);
     const userRef = doc(db, 'users', user.uid);
     // Check if the document already exists
     const docSnap = await getDoc(userRef);
@@ -33,7 +34,7 @@ async function createUserProfile(user: User, role: 'teacher' | 'student') {
 /** Initiate email/password sign-up (non-blocking). */
 export async function initiateEmailSignUp(authInstance: Auth, email: string, password: string, role: 'teacher' | 'student'): Promise<void> {
   const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
-  await createUserProfile(userCredential.user, role);
+  await createUserProfile(authInstance.app, userCredential.user, role);
 }
 
 /** Initiate email/password sign-in (non-blocking). */
@@ -46,7 +47,7 @@ export async function initiateGoogleSignIn(authInstance: Auth, role: 'teacher' |
   const provider = new GoogleAuthProvider();
   const result = await signInWithPopup(authInstance, provider);
   
-  await createUserProfile(result.user, role);
+  await createUserProfile(authInstance.app, result.user, role);
 }
 
 /** Initiate anonymous sign-in (non-blocking). */
