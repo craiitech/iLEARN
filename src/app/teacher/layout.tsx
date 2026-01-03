@@ -27,7 +27,7 @@ import {
 import { UserNav } from "@/components/user-nav";
 import { useFirebase, useDoc } from "@/firebase";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { doc } from "firebase/firestore";
 
 
@@ -38,32 +38,34 @@ export default function TeacherLayout({
 }) {
   const { user, isUserLoading, firestore } = useFirebase();
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const pathname = usePathname();
 
   const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
   const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
+  
+  const isLoading = isUserLoading || isUserDocLoading;
 
   useEffect(() => {
-    // This effect now only handles role-based authorization for this specific layout.
-    // Global redirection (e.g., for unauthenticated users) is handled by AuthHandler.
-    if (isUserLoading || (user && isUserDocLoading)) {
-      return; // Wait for all auth/user data to be loaded
+    if (isLoading) {
+      return; // Wait for all data to load
     }
 
-    if (user && userData) {
-      if (userData.role === 'teacher') {
-        setIsAuthorized(true);
-      } else {
-        // If the user is logged in but not a teacher, redirect them away.
-        router.replace(`/${userData.role || 'student'}/dashboard`);
-      }
+    // If there's no user, redirect to login from any teacher page
+    if (!user) {
+      router.replace('/login');
+      return;
     }
-    // No need for an 'else' here, as AuthHandler will redirect unauthenticated users.
 
-  }, [user, isUserLoading, userData, isUserDocLoading, router]);
+    // If user data is loaded and the role is not 'teacher', redirect them
+    if (userData && userData.role !== 'teacher') {
+      router.replace(`/${userData.role || 'student'}/dashboard`);
+      return;
+    }
+    
+  }, [user, userData, isLoading, router, pathname]);
 
   // While loading authentication state or user role, show a full-page loader.
-  if (isUserLoading || isUserDocLoading || !isAuthorized) {
+  if (isLoading || !user || !userData) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -71,7 +73,7 @@ export default function TeacherLayout({
       );
   }
   
-
+  // If the user is authorized, render the layout
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">

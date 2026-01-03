@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,12 +12,14 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useDoc } from '@/firebase';
 import {
   initiateGoogleSignIn,
 } from '@/firebase/non-blocking-login';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
+import { useRouter } from 'next/navigation';
+import { doc } from 'firebase/firestore';
 
 const GoogleIcon = () => (
   <svg
@@ -40,14 +42,10 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleAuthError = (error: any) => {
-        // Log the full error to the console for debugging
         console.error("Authentication Error:", error);
-
-        // Optionally, still show a generic toast, but the main goal is console logging.
-        // If you want NO toast at all, you can remove the toast() call entirely.
+        
         const firebaseError = error as FirebaseError;
         if (firebaseError.code === 'auth/cancelled-popup-request' || firebaseError.code === 'auth/popup-closed-by-user') {
-            // It's often better to not show an error for these user actions.
             return;
         }
 
@@ -62,8 +60,7 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
         setIsLoading(true);
         try {
             await initiateGoogleSignIn(auth, role);
-            // On successful sign-in, Firebase's onAuthStateChanged listener in the
-            // provider will handle redirection automatically.
+            // After sign-in, the useEffect in the main component will handle redirection.
         } catch (error) {
             handleAuthError(error);
         } finally {
@@ -89,6 +86,37 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
 }
 
 export default function UnifiedLoginPage() {
+  const { user, isUserLoading, firestore } = useFirebase();
+  const router = useRouter();
+
+  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
+  const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
+
+  useEffect(() => {
+    // This effect handles redirection for already logged-in users.
+    if (isUserLoading || isUserDocLoading) {
+      return; // Wait for data
+    }
+    
+    if (user && userData) {
+      const { role } = userData;
+      if (role === 'teacher') {
+          router.replace('/teacher/dashboard');
+      } else if (role === 'student') {
+          router.replace('/student/dashboard');
+      }
+    }
+  }, [user, userData, isUserLoading, isUserDocLoading, router]);
+
+  if (isUserLoading || (user && isUserDocLoading)) {
+      return (
+          <div className="flex h-screen w-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+      );
+  }
+  
+  // If user is loaded and they are not being redirected, show the login form.
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
