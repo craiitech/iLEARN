@@ -64,12 +64,12 @@ function BlockDetailPage() {
                 </Button>
             </div>
 
-            <Card className="mb-8">
+            <Card>
                 <CardHeader>
                     <div className="flex items-start justify-between">
                         <div>
                             <CardTitle className="text-2xl font-headline">Manage Block</CardTitle>
-                            <CardDescription>View enrolled students for this course section.</CardDescription>
+                            <CardDescription>View details for this course section.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
                             <span className="font-mono text-lg font-semibold text-primary">{block.blockCode}</span>
@@ -83,19 +83,6 @@ function BlockDetailPage() {
                  <CardContent>
                     <p className="font-semibold">{block.schedule}</p>
                  </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Enrolled Students</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-center p-8 flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed">
-                        <Users className="h-12 w-12 text-muted-foreground" />
-                        <h3 className="text-lg font-semibold">No Students Enrolled</h3>
-                        <p className="text-muted-foreground text-sm max-w-sm mx-auto">Share the block code with your students to have them join this section.</p>
-                    </div>
-                </CardContent>
             </Card>
         </div>
     )
