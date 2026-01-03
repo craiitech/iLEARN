@@ -41,14 +41,18 @@ export default function UnifiedLoginPage() {
   const handleAuthError = (error: any) => {
     const firebaseError = error as FirebaseError;
     let errorMessage = 'An unexpected error occurred. Please try again.';
+    // Handle specific, known authentication errors with user-friendly messages.
     if (firebaseError.code) {
       switch (firebaseError.code) {
         case 'auth/popup-closed-by-user':
           errorMessage =
             'The sign-in pop-up was closed before completing. Please try again.';
           break;
+        case 'auth/cancelled-popup-request':
+            // This can happen if the user opens multiple popups. We can ignore it or show a gentle message.
+            return; // Often best to just ignore this one.
         default:
-          errorMessage = firebaseError.message;
+          errorMessage = `An authentication error occurred. Please try again. (Code: ${firebaseError.code})`;
           break;
       }
     }
@@ -63,10 +67,7 @@ export default function UnifiedLoginPage() {
     setIsGoogleLoading(true);
     try {
       await initiateGoogleSignIn(auth);
-      toast({
-        title: 'Google Sign-In Successful',
-        description: 'Welcome! Redirecting...',
-      });
+      // The redirect is handled by the layout components, so we don't need a success toast here.
     } catch (error) {
       handleAuthError(error);
     } finally {
