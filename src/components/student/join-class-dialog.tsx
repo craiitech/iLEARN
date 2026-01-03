@@ -75,13 +75,9 @@ export function JoinClassDialog() {
             const blockDoc = querySnapshot.docs[0];
             const blockData = blockDoc.data();
 
-            // The block's parent is the course, and the course's parent is the teacher (user)
-            const courseRef = blockDoc.ref.parent.parent;
-            if (!courseRef) {
-                 throw new Error("Could not find parent course for this block.");
+            if (!blockData.teacherId) {
+                throw new Error("Could not join class: Missing teacher information on the block.");
             }
-            // The teacherId is the ID of the user who owns the course.
-            const teacherId = courseRef.path.split('/')[1];
 
             // Create the enrollment document in the top-level 'enrollments' collection
             const enrollmentsCollection = collection(firestore, 'enrollments');
@@ -89,7 +85,7 @@ export function JoinClassDialog() {
                 studentId: user.uid,
                 blockId: blockDoc.id,
                 courseId: blockData.courseId,
-                teacherId: teacherId, 
+                teacherId: blockData.teacherId, 
                 enrollmentDate: new Date(),
             });
 
@@ -141,7 +137,7 @@ export function JoinClassDialog() {
                   <FormItem>
                     <FormLabel>Block Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., AB-12-CD" {...field} />
+                      <Input placeholder="e.g., ABC123" {...field} />
                     </FormControl>
                     <FormDescription>
                       This code is case-sensitive.
@@ -163,5 +159,3 @@ export function JoinClassDialog() {
     </Dialog>
   );
 }
-
-    

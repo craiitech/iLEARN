@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, DocumentReference } from "firebase/firestore";
+import { useFirebase } from "@/firebase";
 
 const formSchema = z.object({
   blockName: z.string().min(1, "Block name is required."),
@@ -45,6 +46,7 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useFirebase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,6 +57,10 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to create a block."});
+        return;
+    }
     setIsSaving(true);
     try {
       const blocksCollection = collection(courseRef, 'blocks');
@@ -63,6 +69,7 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
         ...values,
         blockCode: null, // Ensure blockCode is explicitly null on creation
         courseId: courseRef.id,
+        teacherId: user.uid, // Add the teacherId to the block
         createdAt: new Date(),
       });
       

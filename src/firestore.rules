@@ -110,10 +110,11 @@ service cloud.firestore {
     }
 
     // This rule allows a collection group query on 'blocks' by any signed-in user.
-    // The query in the app MUST be secured with a 'where' clause. This is necessary
-    // for the student to be able to find a block by its code.
+    // The query in the app MUST be secured with a 'where' clause on 'blockCode'.
+    // This rule is necessary for the student to be able to find a block by its code.
     match /{path=**}/blocks/{blockId} {
-        allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow get: if false; // Disallow direct reads without knowing the full path
     }
     
   }
