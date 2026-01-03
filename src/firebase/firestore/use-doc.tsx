@@ -28,15 +28,12 @@ export interface UseDocResult<T> {
 /**
  * React hook to subscribe to a single Firestore document in real-time.
  * Handles nullable references.
- * 
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
  *
+ * IMPORTANT! The docRef passed to this hook MUST be memoized with React.useMemo.
  *
  * @template T Optional type for document data. Defaults to any.
- * @param {DocumentReference<DocumentData> | null | undefined} docRef -
- * The Firestore DocumentReference. Waits if null/undefined.
+ * @param {DocumentReference<DocumentData> | null | undefined} memoizedDocRef -
+ * The memoized Firestore DocumentReference. Waits if null/undefined.
  * @returns {UseDocResult<T>} Object with data, isLoading, error.
  */
 export function useDoc<T = any>(
@@ -45,20 +42,19 @@ export function useDoc<T = any>(
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
   const { isUserLoading } = useFirebase();
 
+  // isLoading is true if we are waiting for auth or if the doc ref is not ready.
+  const isLoading = isUserLoading || !memoizedDocRef;
+
   useEffect(() => {
+    // Do not proceed if the doc ref is not ready or auth is in progress.
     if (!memoizedDocRef || isUserLoading) {
       setData(null);
-      setIsLoading(true);
       setError(null);
       return;
     }
-
-    setIsLoading(true);
-    setError(null);
 
     const unsubscribe = onSnapshot(
       memoizedDocRef,
@@ -69,26 +65,25 @@ export function useDoc<T = any>(
           // Document does not exist
           setData(null);
         }
-        setError(null); // Clear any previous error on successful snapshot (even if doc doesn't exist)
-        setIsLoading(false);
+        setError(null); // Clear any previous error on successful snapshot
       },
-      (error: FirestoreError) => {
+      (snapshotError: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,
         })
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        setError(contextualError);
+        setData(null);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
       }
     );
 
+    // Cleanup subscription on unmount or when dependencies change.
     return () => unsubscribe();
-  }, [memoizedDocRef, isUserLoading]); // Re-run if the docRef or user loading state changes.
+  }, [memoizedDocRef, isUserLoading]); // Re-run effect if docRef or user loading state changes.
 
-  return { data, isLoading: isLoading || isUserLoading, error };
+  return { data, isLoading, error };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Query,
   onSnapshot,
@@ -28,7 +28,6 @@ export interface UseCollectionResult<T> {
 
 /**
  * A type guard to check if an object is a Query.
- * Firestore Queries have a `ref` property pointing to the CollectionReference.
  */
 function isQuery(obj: any): obj is Query {
     return obj && typeof obj.ref === 'object' && typeof obj.ref.path === 'string';
@@ -37,13 +36,12 @@ function isQuery(obj: any): obj is Query {
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Handles nullable references/queries and waits for user authentication to complete.
- * 
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use React.useMemo to memoize it per React guidance.
- *  
+ *
+ * IMPORTANT! The query/reference passed to this hook MUST be memoized with React.useMemo.
+ *
  * @template T Optional type for document data. Defaults to any.
  * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
- * The Firestore CollectionReference or Query. Waits if null/undefined.
+ * The memoized Firestore CollectionReference or Query. Hook waits if this is null/undefined.
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
@@ -53,23 +51,20 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  const { isUserLoading } = useFirebase(); // Get auth loading state
+  const { isUserLoading } = useFirebase();
+
+  // isLoading is true if we are waiting for auth or if the query is not ready yet.
+  const isLoading = isUserLoading || !memoizedTargetRefOrQuery;
 
   useEffect(() => {
-    // If the query/ref is not ready OR if the user is still loading,
-    // set loading to true and wait. This prevents premature queries.
+    // Do not proceed if the query is not ready or auth is in progress.
     if (!memoizedTargetRefOrQuery || isUserLoading) {
-      setIsLoading(true);
+      // Reset state when query/auth changes and is not ready.
       setData(null);
       setError(null);
       return;
     }
-
-    // When the query/ref is ready AND the user is loaded, proceed.
-    setIsLoading(true);
-    setError(null);
 
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
@@ -80,39 +75,35 @@ export function useCollection<T = any>(
         }
         setData(results);
         setError(null);
-        setIsLoading(false);
       },
-      (error: FirestoreError) => {
+      (snapshotError: FirestoreError) => {
         let path = 'unknown/path';
-        
-        if (memoizedTargetRefOrQuery) {
-            try {
-                if (isQuery(memoizedTargetRefOrQuery)) {
-                    path = memoizedTargetRefOrQuery.ref.path;
-                } else if ('path' in memoizedTargetRefOrQuery) {
-                    path = (memoizedTargetRefOrQuery as CollectionReference).path;
-                }
-            } catch (e) {
-                console.error("Could not determine path for Firestore error reporting:", e);
+        try {
+            if (isQuery(memoizedTargetRefOrQuery)) {
+                path = memoizedTargetRefOrQuery.ref.path;
+            } else if ('path' in memoizedTargetRefOrQuery) {
+                path = (memoizedTargetRefOrQuery as CollectionReference).path;
             }
+        } catch (e) {
+            console.error("useCollection: Could not determine path for Firestore error reporting:", e);
         }
-        
+
         const contextualError = new FirestorePermissionError({
           operation: 'list',
           path,
         })
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        setError(contextualError);
+        setData(null);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
       }
     );
 
+    // Cleanup subscription on unmount or when dependencies change.
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, isUserLoading]); // Re-run if the query OR user loading state changes.
+  }, [memoizedTargetRefOrQuery, isUserLoading]); // Re-run effect if query or user loading state changes.
 
-  return { data, isLoading: isLoading || isUserLoading, error };
+  return { data, isLoading, error };
 }
