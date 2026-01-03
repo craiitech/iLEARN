@@ -20,9 +20,15 @@
           "type": "string",
           "description": "User's display name."
         },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
         "role": {
           "type": "string",
-          "description": "User's role (e.g., Teacher, Student)."
+          "description": "User's role (e.g., Teacher, Student).",
+          "enum": ["teacher", "student"]
         }
       },
       "required": ["id", "email", "displayName", "role"]

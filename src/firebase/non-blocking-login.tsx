@@ -24,6 +24,7 @@ async function createUserProfile(user: User, role: 'teacher' | 'student') {
             id: user.uid,
             email: user.email,
             displayName: user.displayName,
+            photoURL: user.photoURL,
             role: role,
         });
     }
@@ -41,14 +42,11 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 }
 
 /** Initiate Google sign-in (non-blocking). */
-export async function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
+export async function initiateGoogleSignIn(authInstance: Auth, role: 'teacher' | 'student'): Promise<void> {
   const provider = new GoogleAuthProvider();
   const result = await signInWithPopup(authInstance, provider);
   
-  // For Google sign-in, we don't know the role.
-  // A real app would have a post-registration step to select a role.
-  // We check for an existing profile before creating a new one with a default role.
-  await createUserProfile(result.user, 'student');
+  await createUserProfile(result.user, role);
 }
 
 /** Initiate anonymous sign-in (non-blocking). */

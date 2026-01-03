@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,7 +31,7 @@ export function UserNav() {
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
-      router.push('/teacher/login');
+      router.push('/login');
     } catch (error) {
       console.error("Error signing out: ", error);
       toast({
@@ -60,7 +61,7 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.displayName || "Teacher"}</p>
+            <p className="text-sm font-medium leading-none">{user.displayName || "User"}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>

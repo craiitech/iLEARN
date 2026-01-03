@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 import {
@@ -33,48 +34,63 @@ const GoogleIcon = () => (
   </svg>
 );
 
+function AuthForm({ role }: { role: 'student' | 'teacher' }) {
+    const { toast } = useToast();
+    const { auth } = useFirebase();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const handleAuthError = (error: any) => {
+        const firebaseError = error as FirebaseError;
+        let errorMessage = 'An unexpected error occurred. Please try again.';
+        if (firebaseError.code) {
+        switch (firebaseError.code) {
+            case 'auth/popup-closed-by-user':
+            errorMessage =
+                'The sign-in pop-up was closed before completing. Please try again.';
+            break;
+            case 'auth/cancelled-popup-request':
+                return; // Often best to just ignore this one.
+            default:
+            errorMessage = `An authentication error occurred. Please try again. (Code: ${firebaseError.code})`;
+            break;
+        }
+        }
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Failed',
+            description: errorMessage,
+        });
+    };
+
+    async function onGoogleSignIn() {
+        setIsLoading(true);
+        try {
+            await initiateGoogleSignIn(auth, role);
+        } catch (error) {
+            handleAuthError(error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    return (
+        <Button
+            variant="outline"
+            className="w-full"
+            onClick={onGoogleSignIn}
+            disabled={isLoading}
+            >
+            {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+                <GoogleIcon />
+            )}
+            Sign in as {role.charAt(0).toUpperCase() + role.slice(1)}
+        </Button>
+    )
+}
+
 export default function UnifiedLoginPage() {
-  const { toast } = useToast();
-  const { auth } = useFirebase();
-  const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
-
-  const handleAuthError = (error: any) => {
-    const firebaseError = error as FirebaseError;
-    let errorMessage = 'An unexpected error occurred. Please try again.';
-    // Handle specific, known authentication errors with user-friendly messages.
-    if (firebaseError.code) {
-      switch (firebaseError.code) {
-        case 'auth/popup-closed-by-user':
-          errorMessage =
-            'The sign-in pop-up was closed before completing. Please try again.';
-          break;
-        case 'auth/cancelled-popup-request':
-            // This can happen if the user opens multiple popups. We can ignore it or show a gentle message.
-            return; // Often best to just ignore this one.
-        default:
-          errorMessage = `An authentication error occurred. Please try again. (Code: ${firebaseError.code})`;
-          break;
-      }
-    }
-    toast({
-      variant: 'destructive',
-      title: 'Authentication Failed',
-      description: errorMessage,
-    });
-  };
-
-  async function onGoogleSignIn() {
-    setIsGoogleLoading(true);
-    try {
-      await initiateGoogleSignIn(auth);
-      // The redirect is handled by the layout components, so we don't need a success toast here.
-    } catch (error) {
-      handleAuthError(error);
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
@@ -84,25 +100,28 @@ export default function UnifiedLoginPage() {
           </div>
           <CardTitle className="text-2xl font-headline">RSU iLEARN</CardTitle>
           <CardDescription>
-            Sign in or create your account with Google.
+            Sign in to your Student or Teacher account.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={onGoogleSignIn}
-              disabled={isGoogleLoading}
-            >
-              {isGoogleLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <GoogleIcon />
-              )}
-              Sign in with Google
-            </Button>
-          </div>
+            <Tabs defaultValue="student" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="student">Student</TabsTrigger>
+                    <TabsTrigger value="teacher">Teacher</TabsTrigger>
+                </TabsList>
+                <TabsContent value="student" className="pt-4">
+                    <p className="text-center text-sm text-muted-foreground mb-4">
+                        Sign in with your university-provided Google account.
+                    </p>
+                    <AuthForm role="student" />
+                </TabsContent>
+                <TabsContent value="teacher" className="pt-4">
+                     <p className="text-center text-sm text-muted-foreground mb-4">
+                        Faculty members sign in here.
+                    </p>
+                    <AuthForm role="teacher" />
+                </TabsContent>
+            </Tabs>
         </CardContent>
       </Card>
     </div>
