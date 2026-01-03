@@ -22,40 +22,30 @@ export function AuthHandler() {
   const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
 
   const isLoading = isUserLoading || isUserDocLoading;
-  
-  // Use a ref to track if a redirect has already been initiated.
-  const redirectInitiated = useRef(false);
 
   useEffect(() => {
     // Don't do anything until all user and role data has finished loading.
     if (isLoading) {
       return;
     }
-    
-    // If a redirect is already in progress, do nothing to prevent loops.
-    if (redirectInitiated.current) {
-        return;
-    }
 
     const isPublicPath = PUBLIC_PATHS.includes(pathname);
     const userRole = userData?.role;
-    const isStudentOnStudentPage = userRole === 'student' && pathname.startsWith('/student');
-    const isTeacherOnTeacherPage = userRole === 'teacher' && pathname.startsWith('/teacher');
-
+    
     // CASE 1: User is logged in.
     if (user && userRole) {
+      const targetDashboard = userRole === 'teacher' ? '/teacher/dashboard' : '/student/dashboard';
+      const isStudentOnStudentPage = userRole === 'student' && pathname.startsWith('/student');
+      const isTeacherOnTeacherPage = userRole === 'teacher' && pathname.startsWith('/teacher');
+
       // If the user is on a public page (like /login), redirect them to their dashboard.
       if (isPublicPath) {
-        redirectInitiated.current = true;
-        const targetDashboard = userRole === 'teacher' ? '/teacher/dashboard' : '/student/dashboard';
         router.replace(targetDashboard);
         return;
       }
       
       // If the user is on a page that doesn't match their role, redirect them.
       if (!isStudentOnStudentPage && !isTeacherOnTeacherPage) {
-        redirectInitiated.current = true;
-        const targetDashboard = userRole === 'teacher' ? '/teacher/dashboard' : '/student/dashboard';
         router.replace(targetDashboard);
         return;
       }
@@ -65,13 +55,12 @@ export function AuthHandler() {
     if (!user) {
       // If they are on a protected page, redirect them to the login page.
       if (!isPublicPath) {
-        redirectInitiated.current = true;
         router.replace('/login');
         return;
       }
     }
 
-  }, [user, userData, isLoading, pathname, router, isUserDocLoading]);
+  }, [user, userData, isLoading, pathname, router]);
   
   // This component renders nothing. It only handles effects.
   return null;

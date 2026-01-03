@@ -79,8 +79,7 @@ export default function UnifiedLoginPage() {
   const { user, isUserLoading } = useUser();
 
   // If we are checking auth state OR if a user is already logged in,
-  // show a loader. The AuthHandler will handle redirecting the user
-  // away from this page to their correct dashboard.
+  // the AuthHandler will handle redirection. Show a loader in the meantime.
   if (isUserLoading || user) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
