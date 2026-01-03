@@ -78,8 +78,8 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
 export default function UnifiedLoginPage() {
   const { user, isUserLoading } = useUser();
 
-  // If we are checking auth state OR if a user is already logged in,
-  // the AuthHandler will handle redirection. Show a loader in the meantime.
+  // While the auth state is loading, or if the user is logged in,
+  // the AuthHandler will take care of redirection. We just show a loader.
   if (isUserLoading || user) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
