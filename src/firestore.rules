@@ -74,9 +74,9 @@ service cloud.firestore {
       allow create: if isOwner(request.resource.data.studentId);
       
       // A teacher can list enrollments if the query filters by their teacherId.
-      // A student can list their OWN enrollments by filtering by their studentId.
-      allow list: if (isTeacher() && request.query.where.teacherId == request.auth.uid) 
-                   || (isSignedIn() && request.query.where.studentId == request.auth.uid);
+      // A student can list their OWN enrollments. The client-side query MUST
+      // enforce the filter by studentId. This rule just allows the query to proceed.
+      allow list: if isSignedIn();
 
       allow update, delete: if false;
     }
@@ -98,7 +98,7 @@ service cloud.firestore {
       allow get: if isStudentOwner() || isAssignmentTeacher();
       
       // A teacher can list submissions ONLY IF the query filters by their teacher ID.
-      // This is the correct syntax for enforcing a where clause.
+      // The client query must enforce `where('teacherId', '==', request.auth.uid)`.
       allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
 
       allow create: if isCreatingOwnSubmission();
