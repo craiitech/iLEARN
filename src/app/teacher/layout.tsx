@@ -26,7 +26,7 @@ import {
 import { UserNav } from "@/components/user-nav";
 import { useFirebase, useDoc } from "@/firebase";
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { doc } from "firebase/firestore";
 
 
@@ -44,21 +44,22 @@ export default function TeacherLayout({
   const isLoading = isUserLoading || isUserDocLoading;
 
   useEffect(() => {
-    // Wait until loading is complete before doing anything.
+    // Wait until all loading is finished.
     if (isLoading) {
       return;
     }
 
-    // If there's no user, redirect to login from any teacher page.
+    // If there's no user object, they are not logged in.
+    // Redirect to the login page.
     if (!user) {
       router.replace('/login');
       return;
     }
 
-    // If user data is loaded and the role is not 'teacher', redirect them.
+    // If there is a user, but we have their role data, and it's NOT teacher,
+    // redirect them to their correct dashboard.
     if (userData && userData.role !== 'teacher') {
-       // Redirect to the correct dashboard based on their actual role.
-      router.replace(userData.role === 'student' ? '/student/dashboard' : '/login');
+       router.replace(userData.role === 'student' ? '/student/dashboard' : '/login');
       return;
     }
     
@@ -66,7 +67,7 @@ export default function TeacherLayout({
 
   // While loading authentication state or user role, show a full-page loader.
   // This is the gatekeeper for the entire teacher section.
-  if (isLoading || !userData) {
+  if (isLoading) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -74,89 +75,100 @@ export default function TeacherLayout({
       );
   }
   
-  // If the user is authorized, render the layout
+  // Only render the layout if the user is a teacher.
+  // This prevents flashing the layout for users who will be redirected.
+  if (userData?.role === 'teacher') {
+    return (
+      <SidebarProvider>
+        <Sidebar collapsible="icon">
+          <SidebarRail />
+          <SidebarHeader>
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <GraduationCap className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h2 className="text-lg font-semibold font-headline tracking-tighter text-primary">
+                RSU iLEARN
+              </h2>
+            </Link>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  href="/teacher/dashboard"
+                  asChild
+                  tooltip="Home"
+                >
+                  <Link href="/teacher/dashboard">
+                    <Home />
+                    <span>Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton href="/teacher/courses" asChild tooltip="Courses" isActive>
+                  <Link href="/teacher/courses">
+                    <Library />
+                    <span>Courses</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="/teacher/quizzes" asChild tooltip="Quizzes">
+                  <Link href="/teacher/quizzes">
+                    <FileCheck />
+                    <span>Quizzes</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="/teacher/grading" asChild tooltip="Grading">
+                  <Link href="/teacher/grading">
+                    <GraduationCap />
+                    <span>Grading</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#" asChild tooltip="Announcements">
+                  <Link href="#">
+                    <MessageSquare />
+                    <span>Announcements</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#" asChild tooltip="Settings">
+                  <Link href="#">
+                    <Settings />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+        </Sidebar>
+        <SidebarInset>
+          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
+              <SidebarTrigger />
+              <div className="w-full flex-1">
+              </div>
+              {isUserLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <UserNav />}
+          </header>
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
+            {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
+
+  // If the logic somehow falls through (e.g., user exists but role is missing),
+  // show a loader while the redirect is in progress.
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon">
-        <SidebarRail />
-        <SidebarHeader>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <h2 className="text-lg font-semibold font-headline tracking-tighter text-primary">
-              RSU iLEARN
-            </h2>
-          </Link>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                href="/teacher/dashboard"
-                asChild
-                tooltip="Home"
-              >
-                <Link href="/teacher/dashboard">
-                  <Home />
-                  <span>Home</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton href="/teacher/courses" asChild tooltip="Courses" isActive>
-                <Link href="/teacher/courses">
-                  <Library />
-                  <span>Courses</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/teacher/quizzes" asChild tooltip="Quizzes">
-                <Link href="/teacher/quizzes">
-                  <FileCheck />
-                  <span>Quizzes</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/teacher/grading" asChild tooltip="Grading">
-                <Link href="/teacher/grading">
-                  <GraduationCap />
-                  <span>Grading</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#" asChild tooltip="Announcements">
-                <Link href="#">
-                  <MessageSquare />
-                  <span>Announcements</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#" asChild tooltip="Settings">
-                <Link href="#">
-                  <Settings />
-                  <span>Settings</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
-            <SidebarTrigger />
-            <div className="w-full flex-1">
-            </div>
-            {isUserLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <UserNav />}
-        </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
-          {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
   );
 }

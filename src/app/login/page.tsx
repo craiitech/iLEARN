@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,15 +10,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 import {
   initiateGoogleSignIn,
 } from '@/firebase/non-blocking-login';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
-import { useRouter } from 'next/navigation';
-import { doc } from 'firebase/firestore';
 
 const GoogleIcon = () => (
   <svg
@@ -36,40 +33,31 @@ const GoogleIcon = () => (
 );
 
 function AuthForm({ role }: { role: 'student' | 'teacher' }) {
-    const { toast } = useToast();
     const { auth } = useFirebase();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const router = useRouter();
 
     const handleAuthError = (error: any) => {
         setIsLoading(false);
         console.error("Authentication Error:", error);
-        const firebaseError = error as FirebaseError;
-        // Don't show a toast for user-cancelled popups.
-        if (firebaseError.code === 'auth/cancelled-popup-request' || firebaseError.code === 'auth/popup-closed-by-user') {
-            return;
-        }
-        toast({
-            variant: 'destructive',
-            title: 'Authentication Failed',
-            description: firebaseError.message || 'An error occurred during sign-in.',
-        });
     };
 
     async function onGoogleSignIn() {
         setIsLoading(true);
         try {
-            const userCredential = await initiateGoogleSignIn(auth, role);
-            // After sign-in, redirect based on the role they signed in with.
-            if (role === 'teacher') {
-                router.replace('/teacher/dashboard');
-            } else {
-                router.replace('/student/dashboard');
-            }
+            await initiateGoogleSignIn(auth, role);
+            // After sign-in, the layout components will handle redirection.
+            // No need to redirect from here.
         } catch (error) {
             handleAuthError(error);
         }
-        // No need to set isLoading to false here, as a successful sign-in will navigate away.
+        // Don't set isLoading to false on success, as the page will redirect.
+        // But if an error other than user cancellation occurs, stop loading.
+        const firebaseError = error as FirebaseError;
+        if (firebaseError.code !== 'auth/cancelled-popup-request' && firebaseError.code !== 'auth/popup-closed-by-user') {
+            setIsLoading(false);
+        } else {
+             setIsLoading(false); // Also stop loading if user cancels.
+        }
     }
 
     return (
@@ -91,20 +79,11 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
 
 export default function UnifiedLoginPage() {
   const { user, isUserLoading } = useFirebase();
-  const router = useRouter();
 
-  // If user is already logged in, redirect them from the login page.
-  // This is a simple effect that relies on the layout to handle role-based routing.
-  useEffect(() => {
-    if (!isUserLoading && user) {
-        // We don't know the role here, so we send them to a neutral-ish place.
-        // The layouts for /teacher/* and /student/* will handle the final redirection.
-        router.replace('/teacher/dashboard'); 
-    }
-  }, [user, isUserLoading, router]);
-
-  // While checking auth state, show a loader.
-  if (isUserLoading) {
+  // If we are checking auth state OR if a user is already logged in,
+  // show a loader. The protected layouts will handle redirecting the user
+  // away from this page to their correct dashboard.
+  if (isUserLoading || user) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -112,7 +91,7 @@ export default function UnifiedLoginPage() {
       );
   }
   
-  // If user is not logged in, show the login form.
+  // Only show the login form if the user is definitively logged out.
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
