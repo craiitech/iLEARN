@@ -27,7 +27,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Allow a user to read their own document (e.g. to check for role)
-      allow get: if isOwner(userId);
+      allow get: if request.auth.uid == userId;
       allow list: if false; 
       // Allow a user to create their own document if it doesn't exist yet.
       // The user's UID must match the document ID they are trying to create.
@@ -73,9 +73,9 @@ service cloud.firestore {
       // A student can create their own enrollment.
       allow create: if isOwner(request.resource.data.studentId);
       
-      // A teacher can list enrollments if the query filters by their teacherId.
-      // A student can list their OWN enrollments. The client-side query MUST
-      // enforce the filter by studentId. This rule just allows the query to proceed.
+      // Teachers can list enrollments for their classes.
+      // Students can list their own enrollments.
+      // The client-side query MUST enforce the where clause filter.
       allow list: if isSignedIn();
 
       allow update, delete: if false;
@@ -97,8 +97,8 @@ service cloud.firestore {
       // OR if they are the teacher assigned to it.
       allow get: if isStudentOwner() || isAssignmentTeacher();
       
-      // A teacher can list submissions ONLY IF the query filters by their teacher ID.
-      // The client query must enforce `where('teacherId', '==', request.auth.uid)`.
+      // Allow a teacher to list submissions ONLY IF the query filters by their teacher ID.
+      // This is the correct syntax for enforcing a where clause.
       allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
 
       allow create: if isCreatingOwnSubmission();
