@@ -157,5 +157,3 @@ function BlockPage() {
 }
 
 export default BlockPage;
-
-    

@@ -21,10 +21,10 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save, FileText, Youtube, Presentation, Link as LinkIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { useFirebase, useDoc, useCollection } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, query } from "firebase/firestore";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -69,20 +69,20 @@ export default function NewLessonPage() {
   const router = useRouter();
   const params = useParams();
   const courseId = params.courseId as string;
-  const { firestore, user, isUserLoading: isAuthLoading } = useFirebase();
+  const { firestore, user, isUserLoading } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
 
-  const courseRef = useMemoFirebase(() => {
-    if (!user || !courseId) return null;
+  const courseRef = useMemo(() => {
+    if (isUserLoading || !user || !courseId) return null;
     return doc(firestore, `users/${user.uid}/courses`, courseId);
-  }, [firestore, user, courseId]);
+  }, [firestore, user, courseId, isUserLoading]);
 
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
   
-  const blocksQuery = useMemoFirebase(() => {
-      if(isAuthLoading || !courseRef) return null;
+  const blocksQuery = useMemo(() => {
+      if(isUserLoading || !courseRef) return null;
       return query(collection(courseRef, 'blocks'));
-  }, [courseRef, isAuthLoading]);
+  }, [courseRef, isUserLoading]);
 
   const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
 
@@ -410,5 +410,3 @@ export default function NewLessonPage() {
     </>
   );
 }
-
-    

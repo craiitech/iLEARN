@@ -21,9 +21,9 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save, FileText, Youtube, Presentation, Link as LinkIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirebase, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { useFirebase, useDoc, useCollection } from "@/firebase";
 import { doc, updateDoc, collection, query } from "firebase/firestore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -70,27 +70,27 @@ export default function EditLessonPage() {
   const params = useParams();
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
-  const { firestore, user, isUserLoading: isAuthLoading } = useFirebase();
+  const { firestore, user, isUserLoading } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
 
-  const lessonRef = useMemoFirebase(() => {
-    if (!user || !courseId || !lessonId) return null;
+  const lessonRef = useMemo(() => {
+    if (isUserLoading || !user || !courseId || !lessonId) return null;
     return doc(firestore, `users/${user.uid}/courses/${courseId}/lessons`, lessonId);
-  }, [firestore, user, courseId, lessonId]);
+  }, [firestore, user, courseId, lessonId, isUserLoading]);
 
   const { data: lesson, isLoading: isLessonLoading } = useDoc(lessonRef);
 
-  const courseRef = useMemoFirebase(() => {
-    if (!user || !courseId) return null;
+  const courseRef = useMemo(() => {
+    if (isUserLoading || !user || !courseId) return null;
     return doc(firestore, `users/${user.uid}/courses`, courseId);
-  }, [firestore, user, courseId]);
+  }, [firestore, user, courseId, isUserLoading]);
 
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
   
-  const blocksQuery = useMemoFirebase(() => {
-      if(isAuthLoading || !courseRef) return null;
+  const blocksQuery = useMemo(() => {
+      if(isUserLoading || !courseRef) return null;
       return query(collection(courseRef, 'blocks'));
-  }, [courseRef, isAuthLoading]);
+  }, [courseRef, isUserLoading]);
   const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -441,5 +441,3 @@ export default function EditLessonPage() {
     </>
   );
 }
-
-    

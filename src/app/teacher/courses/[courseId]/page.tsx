@@ -85,24 +85,24 @@ export default function CourseDetailPage() {
     }, [firestore, user, courseId, isUserLoading]);
 
     const blocksQuery = useMemo(() => {
-        if(!courseRef) return null;
+        if (!courseRef || isUserLoading) return null;
         return query(collection(courseRef, 'blocks'));
-    }, [courseRef]);
+    }, [courseRef, isUserLoading]);
     
     const lessonsQuery = useMemo(() => {
-        if (!courseRef) return null;
+        if (!courseRef || isUserLoading) return null;
         return query(collection(courseRef, 'lessons'), orderBy('createdAt', 'asc'));
-    }, [courseRef]);
+    }, [courseRef, isUserLoading]);
 
     const assignmentsQuery = useMemo(() => {
-        if (!courseRef) return null;
+        if (!courseRef || isUserLoading) return null;
         return query(collection(courseRef, 'assignments'), orderBy('createdAt', 'asc'));
-    }, [courseRef]);
+    }, [courseRef, isUserLoading]);
 
     const quizzesQuery = useMemo(() => {
-        if (!courseRef) return null;
+        if (!courseRef || isUserLoading) return null;
         return query(collection(courseRef, 'quizzes'), orderBy('createdAt', 'asc'));
-    }, [courseRef]);
+    }, [courseRef, isUserLoading]);
 
     const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
     const { data: blocks, isLoading: areBlocksLoading } = useCollection(blocksQuery);
