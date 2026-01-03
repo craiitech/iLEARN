@@ -19,26 +19,9 @@ export default function TeacherDashboard() {
     return query(collection(firestore, `users/${user.uid}/courses`));
   }, [firestore, user, isUserLoading]);
   
-  const submissionsQuery = useMemo(() => {
-    if (isUserLoading || !user) return null;
-    return query(
-        collection(firestore, 'submissions'), 
-        where('teacherId', '==', user.uid),
-        limit(5)
-    );
-  }, [firestore, user, isUserLoading]);
-
 
   const { data: courses, isLoading: coursesLoading } = useCollection(coursesQuery);
-  const { data: submissions, isLoading: submissionsLoading } = useCollection(submissionsQuery);
   
-  const sortedSubmissions = submissions?.sort((a, b) => {
-      const timeA = a.submissionTime?.toDate ? a.submissionTime.toDate().getTime() : 0;
-      const timeB = b.submissionTime?.toDate ? b.submissionTime.toDate().getTime() : 0;
-      return timeB - timeA;
-  });
-
-  const submissionsToGrade = submissions?.filter(s => !s.grade).length || 0;
 
   return (
     <>
@@ -69,9 +52,9 @@ export default function TeacherDashboard() {
             <FileCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             {submissionsLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : <div className="text-2xl font-bold">+{submissionsToGrade}</div>}
+             <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
-              New submissions are awaiting review.
+              New submissions will appear here.
             </p>
           </CardContent>
         </Card>
@@ -128,38 +111,7 @@ export default function TeacherDashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            {submissionsLoading && <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div>}
-            {!submissionsLoading && sortedSubmissions && sortedSubmissions.length > 0 ? (
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Assignment</TableHead>
-                    <TableHead className="text-right">Submitted</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {sortedSubmissions.map(sub => (
-                         <TableRow key={sub.id}>
-                            <TableCell>
-                                <div className="font-medium">{sub.studentName || "Unknown Student"}</div>
-                                <div className="hidden text-sm text-muted-foreground md:inline">
-                                {sub.studentEmail || "No email"}
-                                </div>
-                            </TableCell>
-                             <TableCell>
-                                {sub.assignmentTitle || "Unknown Assignment"}
-                            </TableCell>
-                             <TableCell className="text-right">
-                                {sub.submissionTime ? formatDistanceToNow(new Date(sub.submissionTime.toDate()), { addSuffix: true }) : 'N/A'}
-                             </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-                </Table>
-            ) : (
-                 !submissionsLoading && <p className="text-sm text-center text-muted-foreground p-8">No recent submissions found.</p>
-            )}
+            <p className="text-sm text-center text-muted-foreground p-8">No recent submissions found.</p>
           </CardContent>
         </Card>
       </div>
