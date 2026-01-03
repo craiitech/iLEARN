@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Query,
   onSnapshot,
@@ -39,7 +39,7 @@ function isQuery(obj: any): obj is Query {
  * Handles nullable references/queries and waits for user authentication to complete.
  * 
  * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemoFirebase to memoize it per React guidance.
+ * use React.useMemo to memoize it per React guidance.
  *  
  * @template T Optional type for document data. Defaults to any.
  * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
@@ -47,7 +47,7 @@ function isQuery(obj: any): obj is Query {
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
-    memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
+    memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>) | null | undefined,
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
@@ -83,9 +83,8 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // This is the robust way to get the path.
         let path = 'unknown/path';
-        if (memoizedTargetRefOrQuery) { // Defensive check
+        if (memoizedTargetRefOrQuery) {
             if (isQuery(memoizedTargetRefOrQuery)) {
                 path = memoizedTargetRefOrQuery.ref.path;
             } else if ('path' in memoizedTargetRefOrQuery) {
@@ -109,10 +108,6 @@ export function useCollection<T = any>(
 
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery, isUserLoading]); // Re-run if the query OR user loading state changes.
-
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error('A non-memoized query was passed to useCollection. Use useMemoFirebase to memoize the query.');
-  }
 
   return { data, isLoading: isLoading || isUserLoading, error };
 }
