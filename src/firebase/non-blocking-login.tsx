@@ -9,18 +9,24 @@ import {
   signInWithPopup,
   User,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
 
 async function createUserProfile(user: User, role: 'teacher' | 'student') {
     const db = getFirestore(user.provider.app);
     const userRef = doc(db, 'users', user.uid);
-    await setDoc(userRef, {
-        id: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        role: role,
-    });
+    // Check if the document already exists
+    const docSnap = await getDoc(userRef);
+    
+    // Only create a new profile if one doesn't exist
+    if (!docSnap.exists()) {
+        await setDoc(userRef, {
+            id: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            role: role,
+        });
+    }
 }
 
 /** Initiate email/password sign-up (non-blocking). */
@@ -41,7 +47,7 @@ export async function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
   
   // For Google sign-in, we don't know the role.
   // A real app would have a post-registration step to select a role.
-  // For now, we'll default to 'student' as a placeholder.
+  // We check for an existing profile before creating a new one with a default role.
   await createUserProfile(result.user, 'student');
 }
 
