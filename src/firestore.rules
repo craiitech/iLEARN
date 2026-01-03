@@ -44,7 +44,10 @@ service cloud.firestore {
         allow delete: if isTeacherOwner(teacherId);
 
         match /blocks/{blockId} {
-          allow get, list, create: if isTeacherOwner(teacherId);
+          // Allow any signed-in user to read a block (needed for joining a class via block code)
+          allow get, list: if isSignedIn();
+          // Only the teacher owner can create, update, or delete blocks
+          allow create: if isTeacherOwner(teacherId);
           allow update, delete: if isTeacherOwner(teacherId) && resource != null;
         }
 
@@ -111,9 +114,9 @@ service cloud.firestore {
 
     // This rule allows a collection group query on 'blocks' by any signed-in user.
     // The query in the app MUST be secured with a 'where' clause on 'blockCode'.
-    // This rule is necessary for the student to be able to find and READ a block by its code.
+    // This rule is necessary for the student to be able to find a block by its code.
     match /{path=**}/blocks/{blockId} {
-      allow get, list: if isSignedIn();
+      allow list: if isSignedIn();
     }
     
   }
