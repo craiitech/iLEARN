@@ -1,3 +1,4 @@
+
 'use client';
     
 import { useState, useEffect } from 'react';
@@ -55,9 +56,12 @@ export function useDoc<T = any>(
       setError(null);
       return;
     }
+    
+    // Create a stable reference to the doc for use inside the callbacks.
+    const stableDocRef = memoizedDocRef;
 
     const unsubscribe = onSnapshot(
-      memoizedDocRef,
+      stableDocRef,
       (snapshot: DocumentSnapshot<DocumentData>) => {
         if (snapshot.exists()) {
           setData({ ...(snapshot.data() as T), id: snapshot.id });
@@ -70,7 +74,7 @@ export function useDoc<T = any>(
       (snapshotError: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
           operation: 'get',
-          path: memoizedDocRef.path,
+          path: stableDocRef.path, // Safely access path from the stable reference
         })
 
         setError(contextualError);

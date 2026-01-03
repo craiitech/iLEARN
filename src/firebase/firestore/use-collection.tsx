@@ -57,16 +57,20 @@ export function useCollection<T = any>(
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Do not proceed if the query is not ready or auth is in progress.
+    // If the query isn't ready or auth is loading, reset state and wait.
     if (!memoizedTargetRefOrQuery || isUserLoading) {
       setIsLoading(true);
       setData(null);
       setError(null);
       return;
     }
+    
+    // Create a stable reference to the query for use inside the callbacks.
+    // This prevents race conditions where the outer variable might change.
+    const stableQueryRef = memoizedTargetRefOrQuery;
 
     const unsubscribe = onSnapshot(
-      memoizedTargetRefOrQuery,
+      stableQueryRef,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const results: ResultItemType[] = [];
         for (const doc of snapshot.docs) {
@@ -78,18 +82,16 @@ export function useCollection<T = any>(
       },
       (snapshotError: FirestoreError) => {
         let path = 'unknown/path';
-        // This is a safe-guard. Even if a race condition caused this error,
-        // we will try our best to get the path, but won't fail if we can't.
-        if (memoizedTargetRefOrQuery) {
-            try {
-                if (isQuery(memoizedTargetRefOrQuery)) {
-                    path = memoizedTargetRefOrQuery.ref.path;
-                } else if ('path' in memoizedTargetRefOrQuery) {
-                    path = (memoizedTargetRefOrQuery as CollectionReference).path;
-                }
-            } catch (e) {
-                console.error("useCollection: Could not determine path for Firestore error reporting:", e);
+        
+        // Safely determine the path from the stable reference.
+        try {
+            if (isQuery(stableQueryRef)) {
+                path = stableQueryRef.ref.path;
+            } else if ('path' in stableQueryRef) {
+                path = (stableQueryRef as CollectionReference).path;
             }
+        } catch (e) {
+            console.error("useCollection: Could not determine path for Firestore error reporting:", e);
         }
         
         const contextualError = new FirestorePermissionError({
