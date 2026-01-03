@@ -76,6 +76,7 @@ export default function CourseDetailPage() {
     const courseId = params.courseId as string;
     const [isPolicyOpen, setIsPolicyOpen] = useState(true);
     const [itemToDelete, setItemToDelete] = useState<LearningPathItem | null>(null);
+    const [blockToDelete, setBlockToDelete] = useState<any | null>(null);
     const [previewItem, setPreviewItem] = useState<LearningPathItem | null>(null);
     const { toast } = useToast();
 
@@ -147,7 +148,7 @@ export default function CourseDetailPage() {
     const isPathLoading = areLessonsLoading || areAssignmentsLoading || areQuizzesLoading;
     const isLabCourse = course?.courseType === 'laboratory' || course?.courseType === 'lec_lab';
 
-    const handleDelete = () => {
+    const handleDeleteItem = () => {
         if (!itemToDelete || !courseRef) return;
         
         let subcollectionName = '';
@@ -177,6 +178,18 @@ export default function CourseDetailPage() {
 
         setItemToDelete(null);
     }
+    
+    const handleDeleteBlock = () => {
+        if (!blockToDelete || !courseRef) return;
+
+        const blockRef = doc(collection(courseRef, 'blocks'), blockToDelete.id);
+        deleteDocumentNonBlocking(blockRef);
+        toast({
+            title: "Block Deleted",
+            description: `Block "${blockToDelete.blockName}" has been removed.`,
+        });
+        setBlockToDelete(null);
+    };
 
 
     if (isCourseLoading) {
@@ -251,9 +264,13 @@ export default function CourseDetailPage() {
                                                 <TableCell className="font-medium">{block.blockName}</TableCell>
                                                 <TableCell>{block.schedule}</TableCell>
                                                 <TableCell>0</TableCell>
-                                                <TableCell className="text-right">
+                                                <TableCell className="text-right space-x-2">
                                                     <Button asChild variant="outline" size="sm">
                                                         <Link href={`/teacher/courses/${courseId}/blocks/${block.id}`}>Manage</Link>
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setBlockToDelete(block)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                        <span className="sr-only">Delete Block</span>
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -401,13 +418,29 @@ export default function CourseDetailPage() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the item
+                        This action cannot be undone. This will permanently delete the learning path item
                         <span className="font-bold"> "{itemToDelete?.title}"</span>.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                    <AlertDialogAction onClick={handleDeleteItem}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!blockToDelete} onOpenChange={(open) => !open && setBlockToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the block
+                        <span className="font-bold"> "{blockToDelete?.blockName}"</span> and all its associated data.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setBlockToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteBlock}>Delete</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
