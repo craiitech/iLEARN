@@ -10,17 +10,18 @@ import { useMemo } from "react";
 import { collection, query, where } from "firebase/firestore";
 
 export default function StudentDashboard() {
-    const { firestore, user, isUserLoading } = useFirebase();
+    const { firestore, user } = useFirebase();
 
-    // This query is now correctly gated and will only run when the user is loaded.
+    // The parent layout now handles the main loading and auth checks.
+    // We can safely assume 'user' is available here when the component renders.
     const enrollmentsQuery = useMemo(() => {
-        if (isUserLoading || !user) return null;
+        if (!user) return null;
         return query(collection(firestore, 'enrollments'), where("studentId", "==", user.uid));
-    }, [firestore, user, isUserLoading]);
+    }, [firestore, user]);
 
     const { data: enrollments, isLoading: areEnrollmentsLoading } = useCollection(enrollmentsQuery);
 
-    if (areEnrollmentsLoading || isUserLoading) {
+    if (areEnrollmentsLoading) {
         return (
              <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
                 <div className="flex flex-col items-center gap-4 text-center">

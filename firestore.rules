@@ -28,7 +28,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false; 
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow create: if request.auth.uid == userId;
       allow update: if isOwner(userId) && resource != null && isImmutable('id');
       allow delete: if isOwner(userId) && resource != null;
     }
@@ -69,8 +69,10 @@ service cloud.firestore {
       // A student can create their own enrollment.
       allow create: if isOwner(request.resource.data.studentId);
       
-      // A teacher can list enrollments if the query filters by their teacherId.
-      allow list: if isTeacher() && request.query.where.teacherId == request.auth.uid;
+      // Teachers can list enrollments for their classes.
+      // Students can list their own enrollments.
+      // The client-side query MUST enforce the where clause filter.
+      allow list: if (isTeacher() && request.query.where.teacherId == request.auth.uid) || (isSignedIn() && request.query.where.studentId == request.auth.uid);
 
       allow update, delete: if false;
     }
