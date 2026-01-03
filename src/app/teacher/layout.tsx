@@ -24,10 +24,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
-import { useFirebase, useDoc } from "@/firebase";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { doc } from "firebase/firestore";
+import { useFirebase } from "@/firebase";
 
 
 export default function TeacherLayout({
@@ -35,39 +32,11 @@ export default function TeacherLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading, firestore } = useFirebase();
-  const router = useRouter();
-  
-  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
-  const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
-  
-  const isLoading = isUserLoading || isUserDocLoading;
+  const { user, isUserLoading } = useFirebase();
 
-  useEffect(() => {
-    // Wait until all loading is finished.
-    if (isLoading) {
-      return;
-    }
-
-    // If there's no user object, they are not logged in.
-    // Redirect to the login page.
-    if (!user) {
-      router.replace('/login');
-      return;
-    }
-
-    // If there is a user, but we have their role data, and it's NOT teacher,
-    // redirect them to their correct dashboard.
-    if (userData && userData.role !== 'teacher') {
-       router.replace(userData.role === 'student' ? '/student/dashboard' : '/login');
-      return;
-    }
-    
-  }, [user, userData, isLoading, router]);
-
-  // While loading authentication state or user role, show a full-page loader.
-  // This is the gatekeeper for the entire teacher section.
-  if (isLoading) {
+  // While loading authentication state, show a full-page loader.
+  // The AuthHandler is responsible for redirection.
+  if (isUserLoading) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -75,9 +44,9 @@ export default function TeacherLayout({
       );
   }
   
-  // Only render the layout if the user is a teacher.
-  // This prevents flashing the layout for users who will be redirected.
-  if (userData?.role === 'teacher') {
+  // Only render the layout if there is a user.
+  // The AuthHandler will have already redirected non-teachers or logged-out users.
+  if (user) {
     return (
       <SidebarProvider>
         <Sidebar collapsible="icon">
@@ -164,8 +133,7 @@ export default function TeacherLayout({
     );
   }
 
-  // If the logic somehow falls through (e.g., user exists but role is missing),
-  // show a loader while the redirect is in progress.
+  // If there's no user, show a loader while AuthHandler redirects.
   return (
     <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />

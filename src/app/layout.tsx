@@ -3,6 +3,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AuthHandler } from '@/components/auth/auth-handler';
 
 export const metadata: Metadata = {
   title: 'RSU iLEARN LMS',
@@ -23,6 +24,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
+          <AuthHandler />
           {children}
         </FirebaseClientProvider>
         <Toaster />

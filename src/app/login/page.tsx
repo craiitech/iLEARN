@@ -16,6 +16,7 @@ import {
 } from '@/firebase/non-blocking-login';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
+import { useUser } from '@/firebase';
 
 const GoogleIcon = () => (
   <svg
@@ -45,18 +46,15 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
         setIsLoading(true);
         try {
             await initiateGoogleSignIn(auth, role);
-            // After sign-in, the layout components will handle redirection.
-            // No need to redirect from here.
+            // After sign-in, the AuthHandler component will handle redirection.
         } catch (error) {
             handleAuthError(error);
-        }
-        // Don't set isLoading to false on success, as the page will redirect.
-        // But if an error other than user cancellation occurs, stop loading.
-        const firebaseError = error as FirebaseError;
-        if (firebaseError.code !== 'auth/cancelled-popup-request' && firebaseError.code !== 'auth/popup-closed-by-user') {
-            setIsLoading(false);
-        } else {
-             setIsLoading(false); // Also stop loading if user cancels.
+            const firebaseError = error as FirebaseError;
+            if (firebaseError.code !== 'auth/cancelled-popup-request' && firebaseError.code !== 'auth/popup-closed-by-user') {
+                setIsLoading(false);
+            } else {
+                setIsLoading(false); 
+            }
         }
     }
 
@@ -78,10 +76,10 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
 }
 
 export default function UnifiedLoginPage() {
-  const { user, isUserLoading } = useFirebase();
+  const { user, isUserLoading } = useUser();
 
   // If we are checking auth state OR if a user is already logged in,
-  // show a loader. The protected layouts will handle redirecting the user
+  // show a loader. The AuthHandler will handle redirecting the user
   // away from this page to their correct dashboard.
   if (isUserLoading || user) {
       return (
