@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Query,
   onSnapshot,
@@ -84,14 +84,19 @@ export function useCollection<T = any>(
       },
       (error: FirestoreError) => {
         let path = 'unknown/path';
+        
         if (memoizedTargetRefOrQuery) {
-            if (isQuery(memoizedTargetRefOrQuery)) {
-                path = memoizedTargetRefOrQuery.ref.path;
-            } else if ('path' in memoizedTargetRefOrQuery) {
-                path = (memoizedTargetRefOrQuery as CollectionReference).path;
+            try {
+                if (isQuery(memoizedTargetRefOrQuery)) {
+                    path = memoizedTargetRefOrQuery.ref.path;
+                } else if ('path' in memoizedTargetRefOrQuery) {
+                    path = (memoizedTargetRefOrQuery as CollectionReference).path;
+                }
+            } catch (e) {
+                console.error("Could not determine path for Firestore error reporting:", e);
             }
         }
-
+        
         const contextualError = new FirestorePermissionError({
           operation: 'list',
           path,
