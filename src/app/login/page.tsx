@@ -40,25 +40,21 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleAuthError = (error: any) => {
+        // Log the full error to the console for debugging
+        console.error("Authentication Error:", error);
+
+        // Optionally, still show a generic toast, but the main goal is console logging.
+        // If you want NO toast at all, you can remove the toast() call entirely.
         const firebaseError = error as FirebaseError;
-        let errorMessage = 'An unexpected error occurred. Please try again.';
-        if (firebaseError.code) {
-        switch (firebaseError.code) {
-            case 'auth/popup-closed-by-user':
-            errorMessage =
-                'The sign-in pop-up was closed before completing. Please try again.';
-            break;
-            case 'auth/cancelled-popup-request':
-                return; // Often best to just ignore this one.
-            default:
-            errorMessage = `An authentication error occurred. Please try again. (Code: ${firebaseError.code})`;
-            break;
+        if (firebaseError.code === 'auth/cancelled-popup-request' || firebaseError.code === 'auth/popup-closed-by-user') {
+            // It's often better to not show an error for these user actions.
+            return;
         }
-        }
+
         toast({
             variant: 'destructive',
             title: 'Authentication Failed',
-            description: errorMessage,
+            description: 'An error occurred during sign-in. Check the console for details.',
         });
     };
 
@@ -66,6 +62,8 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
         setIsLoading(true);
         try {
             await initiateGoogleSignIn(auth, role);
+            // On successful sign-in, Firebase's onAuthStateChanged listener in the
+            // provider will handle redirection automatically.
         } catch (error) {
             handleAuthError(error);
         } finally {
