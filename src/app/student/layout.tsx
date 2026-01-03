@@ -25,7 +25,7 @@ import {
 import { UserNav } from "@/components/user-nav";
 import { useFirebase, useDoc } from "@/firebase";
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { doc } from "firebase/firestore";
 
 
@@ -42,10 +42,9 @@ export default function StudentLayout({
   const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
 
   useEffect(() => {
-    // If auth is not loading and there's no user, redirect to login immediately.
+    // If auth state is not loading and there's no user, the AuthHandler will redirect.
     if (!isUserLoading && !user) {
-      router.push('/login');
-      return;
+      return; 
     }
 
     // After user object and its corresponding document are loaded...
@@ -54,6 +53,7 @@ export default function StudentLayout({
          setIsAuthorized(true);
       } else {
         // If not a student, redirect to the appropriate dashboard
+        // The AuthHandler also does this, but this provides an extra layer of security.
         router.push(`/${userData.role}/dashboard`);
       }
     }

@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
 import { useFirebase, useDoc } from "@/firebase";
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { doc } from "firebase/firestore";
 
 
@@ -38,29 +38,30 @@ export default function TeacherLayout({
 }) {
   const { user, isUserLoading, firestore } = useFirebase();
   const router = useRouter();
-  const pathname = usePathname();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
   const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
 
   useEffect(() => {
-    // If auth is not loading and there's no user, redirect to login.
+    // If auth state is not loading and there's no user, the AuthHandler will redirect.
     if (!isUserLoading && !user) {
-      router.push('/login');
       return;
     }
 
-    // After user object is loaded, check their role from the user document
+    // After user object and its corresponding document are loaded...
     if (user && !isUserDocLoading && userData) {
-      if (userData.role !== 'teacher') {
-        // If not a teacher, redirect to the appropriate dashboard
+      if (userData.role === 'teacher') {
+        setIsAuthorized(true);
+      } else {
+        // If not a teacher, redirect to the appropriate dashboard.
         router.push(`/${userData.role}/dashboard`);
       }
     }
   }, [user, isUserLoading, userData, isUserDocLoading, router]);
 
-  // While loading authentication state or user role, show a loader.
-  if (isUserLoading || isUserDocLoading) {
+  // While loading authentication state or user role, show a full-page loader.
+  if (isUserLoading || isUserDocLoading || !isAuthorized) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -68,15 +69,6 @@ export default function TeacherLayout({
       );
   }
   
-  // If we are on a path that is not for teachers, show a loader until redirection is complete.
-  // This prevents flashing the wrong UI.
-  if(userData && userData.role !== 'teacher') {
-     return (
-          <div className="flex h-screen w-full items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-      );
-  }
 
   return (
     <SidebarProvider>
