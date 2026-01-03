@@ -4,12 +4,13 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Users, ClipboardCopy } from "lucide-react";
+import { ArrowLeft, Loader2, ClipboardCopy } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useFirebase, useDoc } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { EditBlockForm } from "@/components/course/edit-block-form";
 
 function BlockDetailPage() {
     const params = useParams();
@@ -44,7 +45,7 @@ function BlockDetailPage() {
         );
     }
     
-    if (!block) {
+    if (!block || !blockRef) {
         return (
              <div className="text-center">
                 <h2 className="text-xl font-semibold">Block not found</h2>
@@ -69,7 +70,7 @@ function BlockDetailPage() {
                     <div className="flex items-start justify-between">
                         <div>
                             <CardTitle className="text-2xl font-headline">Manage Block</CardTitle>
-                            <CardDescription>View details for this course section.</CardDescription>
+                            <CardDescription>Edit the schedule and view the enrollment code for this section.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
                             <span className="font-mono text-lg font-semibold text-primary">{block.blockCode}</span>
@@ -81,7 +82,7 @@ function BlockDetailPage() {
                     </div>
                 </CardHeader>
                  <CardContent>
-                    <p className="font-semibold">{block.schedule}</p>
+                    <EditBlockForm blockRef={blockRef} currentSchedule={block.schedule} />
                  </CardContent>
             </Card>
         </div>
