@@ -4,13 +4,11 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Loader2, Users, ClipboardCopy } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useFirebase, useDoc, useCollection } from "@/firebase";
-import { doc, collection, query, where } from "firebase/firestore";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useFirebase, useDoc } from "@/firebase";
+import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 function BlockDetailPage() {
@@ -21,26 +19,11 @@ function BlockDetailPage() {
     const blockId = params.blockId as string;
 
     const blockRef = useMemo(() => {
-        if (isUserLoading || !user) return null;
+        if (isUserLoading || !user || !courseId || !blockId) return null;
         return doc(firestore, `users/${user.uid}/courses/${courseId}/blocks`, blockId);
     }, [firestore, user, courseId, blockId, isUserLoading]);
 
     const { data: block, isLoading: isBlockLoading } = useDoc(blockRef);
-
-    const enrollmentsQuery = useMemo(() => {
-        if (isUserLoading || !user || !blockId) return null;
-        // Query the top-level 'enrollments' collection
-        return query(
-            collection(firestore, "enrollments"),
-            where("blockId", "==", blockId),
-            where("teacherId", "==", user.uid)
-        );
-    }, [firestore, user, blockId, isUserLoading]);
-
-    const { data: enrollments, isLoading: areEnrollmentsLoading } = useCollection(enrollmentsQuery);
-
-    // In a real app, you would fetch user profiles based on the studentId in enrollments.
-    // For now, we will display the student ID.
     
     const copyToClipboard = () => {
         if (block?.blockCode) {
@@ -107,45 +90,11 @@ function BlockDetailPage() {
                     <CardTitle>Enrolled Students</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {areEnrollmentsLoading ? (
-                        <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
-                    ) : enrollments && enrollments.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Student</TableHead>
-                                    <TableHead>Enrollment Date</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {enrollments.map(enrollment => (
-                                    <TableRow key={enrollment.id}>
-                                        <TableCell className="font-medium flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={`https://picsum.photos/seed/${enrollment.studentId}/40/40`} data-ai-hint="person" />
-                                                <AvatarFallback>{enrollment.studentId.substring(0, 1).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                            {/* In a real app, you'd show student name/email here */}
-                                            {enrollment.studentId.substring(0, 12)}...
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(enrollment.enrollmentDate.seconds * 1000).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm">View Progress</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                         <div className="text-center p-8 flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed">
-                            <Users className="h-12 w-12 text-muted-foreground" />
-                            <h3 className="text-lg font-semibold">No Students Enrolled</h3>
-                            <p className="text-muted-foreground text-sm max-w-sm mx-auto">Share the block code with your students to have them join this section.</p>
-                        </div>
-                    )}
+                    <div className="text-center p-8 flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed">
+                        <Users className="h-12 w-12 text-muted-foreground" />
+                        <h3 className="text-lg font-semibold">No Students Enrolled</h3>
+                        <p className="text-muted-foreground text-sm max-w-sm mx-auto">Share the block code with your students to have them join this section.</p>
+                    </div>
                 </CardContent>
             </Card>
         </div>
