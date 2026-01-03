@@ -1,13 +1,13 @@
 
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, Loader2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { BookOpen, Loader2 } from "lucide-react";
 import { JoinClassDialog } from "@/components/student/join-class-dialog";
 import { useFirebase, useCollection } from "@/firebase";
 import { useMemo } from "react";
 import { collection, query, where } from "firebase/firestore";
+import { StudentCourseCard } from "@/components/student/student-course-card";
 
 export default function StudentDashboard() {
     const { firestore, user } = useFirebase();
@@ -56,15 +56,7 @@ export default function StudentDashboard() {
             <h1 className="text-3xl font-headline font-bold">My Courses</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {enrollments?.map(enrollment => (
-                    <Card key={enrollment.id}>
-                        <CardHeader>
-                            <CardTitle>Course {enrollment.courseId.substring(0,6)}</CardTitle>
-                            <CardDescription>Block: {enrollment.blockId.substring(0,6)}</CardDescription>
-                        </CardHeader>
-                         <CardContent>
-                             <Button className="w-full">View Course</Button>
-                         </CardContent>
-                    </Card>
+                    <StudentCourseCard key={enrollment.id} enrollment={enrollment} />
                 ))}
             </div>
         </div>
