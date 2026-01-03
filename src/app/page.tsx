@@ -31,11 +31,14 @@ export default function LandingPage() {
         </h1>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Button asChild>
-            <a href="/teacher/login">Login</a>
+            <a href="/login">Login</a>
           </Button>
+           <Button asChild variant="secondary">
+             <a href="/login">Sign Up</a>
+           </Button>
         </nav>
       </header>
-      <main className="flex-1 flex items-center">
+      <main className="flex-1 flex items-center justify-center">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
@@ -60,10 +63,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                    <Button asChild size="lg">
-                     <a href="/teacher/login">Teacher Access</a>
-                   </Button>
-                   <Button asChild variant="secondary" size="lg">
-                     <a href="/student/login">Student Portal</a>
+                     <a href="/login">Get Started</a>
                    </Button>
                 </div>
               </div>

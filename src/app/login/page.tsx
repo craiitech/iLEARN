@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,12 +27,14 @@ import {
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { useRouter } from 'next/navigation';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   password: z
     .string()
     .min(6, { message: 'Password must be at least 6 characters long.' }),
+  role: z.enum(['teacher', 'student'], { required_error: 'You must select a role.'}),
 });
 
 type UserAuthForm = z.infer<typeof formSchema>;
@@ -43,7 +47,7 @@ const GoogleIcon = () => (
 );
 
 
-export default function LoginPage() {
+export default function UnifiedLoginPage() {
   const { toast } = useToast();
   const { auth } = useFirebase();
   const router = useRouter();
@@ -56,6 +60,7 @@ export default function LoginPage() {
     defaultValues: {
       email: '',
       password: '',
+      role: 'student',
     },
   });
 
@@ -95,7 +100,7 @@ export default function LoginPage() {
 
     try {
       if (isSigningUp) {
-        await initiateEmailSignUp(auth, values.email, values.password);
+        await initiateEmailSignUp(auth, values.email, values.password, values.role);
         toast({
           title: 'Account Created!',
           description: 'You have been successfully registered. Redirecting...',
@@ -107,7 +112,6 @@ export default function LoginPage() {
           description: 'Welcome back! Redirecting...',
         });
       }
-      // The layout effect will handle redirection on successful login
     } catch (error) {
         handleAuthError(error);
     } finally {
@@ -137,9 +141,9 @@ export default function LoginPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
                 <GraduationCap className="h-8 w-8 text-primary-foreground" />
             </div>
-          <CardTitle className="text-2xl font-headline">Teacher Portal</CardTitle>
+          <CardTitle className="text-2xl font-headline">RSU iLEARN</CardTitle>
           <CardDescription>
-            {isSigningUp ? 'Create your teacher account to get started.' : 'Sign in to access your dashboard.'}
+            {isSigningUp ? 'Create your account to get started.' : 'Sign in to your account.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -162,63 +166,99 @@ export default function LoginPage() {
             
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                        <Input
-                            type="email"
-                            placeholder="teacher@school.edu"
-                            {...field}
-                            disabled={isLoading || isGoogleLoading}
-                        />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                        <Input
-                            type="password"
-                            placeholder="••••••••"
-                            {...field}
-                            disabled={isLoading || isGoogleLoading}
-                        />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <div className="space-y-2 pt-2">
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading || isGoogleLoading}
-                        onClick={() => setIsSigningUp(false)}
-                    >
-                        {isLoading && !isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Sign in with Email
-                    </Button>
-                    <Button
-                        type="submit"
-                        variant="secondary"
-                        className="w-full"
-                        disabled={isLoading || isGoogleLoading}
-                        onClick={() => setIsSigningUp(true)}
-                    >
-                        {isLoading && isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Create Account
-                    </Button>
-                </div>
+                  <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                          <Input
+                              type="email"
+                              placeholder="name@school.edu"
+                              {...field}
+                              disabled={isLoading || isGoogleLoading}
+                          />
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                          <Input
+                              type="password"
+                              placeholder="••••••••"
+                              {...field}
+                              disabled={isLoading || isGoogleLoading}
+                          />
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+
+                  {isSigningUp && (
+                     <FormField
+                        control={form.control}
+                        name="role"
+                        render={({ field }) => (
+                          <FormItem className="space-y-3">
+                            <FormLabel>I am a...</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex space-x-4"
+                              >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="teacher" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Teacher
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="student" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Student
+                                  </FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  )}
+
+                  <div className="space-y-2 pt-2">
+                      <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={isLoading || isGoogleLoading}
+                          onClick={() => form.trigger(['email', 'password'])}
+                      >
+                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                          {isSigningUp ? 'Create Account' : 'Sign In'}
+                      </Button>
+                      <Button
+                          type="button"
+                          variant="link"
+                          className="w-full"
+                          onClick={() => setIsSigningUp(!isSigningUp)}
+                      >
+                          {isSigningUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                      </Button>
+                  </div>
                 </form>
             </Form>
           </div>

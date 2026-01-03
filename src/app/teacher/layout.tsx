@@ -25,9 +25,10 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
-import { useFirebase } from "@/firebase";
+import { useFirebase, useDoc } from "@/firebase";
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { doc } from "firebase/firestore";
 
 
 export default function TeacherLayout({
@@ -35,36 +36,46 @@ export default function TeacherLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useFirebase();
+  const { user, isUserLoading, firestore } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
 
+  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
+  const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
+
   useEffect(() => {
     // If auth is not loading and there's no user, redirect to login.
-    // We also make sure we are not already on the login page to avoid a redirect loop.
-    if (!isUserLoading && !user && pathname !== '/teacher/login') {
-      router.push('/teacher/login');
+    if (!isUserLoading && !user) {
+      router.push('/login');
+      return;
     }
-    // If the user is logged in and tries to go to the login page, redirect to dashboard.
-    if (!isUserLoading && user && pathname === '/teacher/login') {
-      router.push('/teacher/dashboard');
-    }
-  }, [user, isUserLoading, router, pathname]);
 
-  // While loading authentication state, show a loader.
-  // If there's no user and we are not on the login page, also show a loader
-  // to prevent a flash of the old page content before redirection.
-  if (isUserLoading || (!user && pathname !== '/teacher/login')) {
+    // After user object is loaded, check their role from the user document
+    if (user && !isUserDocLoading && userData) {
+      if (userData.role !== 'teacher') {
+        // If not a teacher, redirect to the appropriate dashboard
+        router.push(`/${userData.role}/dashboard`);
+      }
+    }
+  }, [user, isUserLoading, userData, isUserDocLoading, router]);
+
+  // While loading authentication state or user role, show a loader.
+  if (isUserLoading || isUserDocLoading) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
           </div>
       );
   }
-
-  // If we are on the login page, render the children directly without the sidebar layout.
-  if (pathname === '/teacher/login') {
-    return <>{children}</>;
+  
+  // If we are on a path that is not for teachers, show a loader until redirection is complete.
+  // This prevents flashing the wrong UI.
+  if(userData && userData.role !== 'teacher') {
+     return (
+          <div className="flex h-screen w-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+      );
   }
 
   return (
