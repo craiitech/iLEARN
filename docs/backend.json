@@ -125,16 +125,20 @@
           "type": "string",
           "description": "Reference to the master Course blueprint."
         },
+        "blockName": {
+          "type": "string",
+          "description": "Human-readable name for the block (e.g., 'Section A')."
+        },
         "blockCode": {
           "type": "string",
-          "description": "Unique code for students to join this specific block (e.g., APLIT-101-S1)."
+          "description": "Unique, auto-generated code for students to join this specific block (e.g., 'xyz123')."
         },
         "schedule": {
           "type": "string",
           "description": "The schedule for this block (e.g., 'MWF 10-11am')."
         }
       },
-      "required": ["id", "courseId", "blockCode", "schedule"]
+      "required": ["id", "courseId", "blockName", "schedule"]
     },
     "Enrollment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -549,5 +553,3 @@
     ]
   }
 }
-
-    

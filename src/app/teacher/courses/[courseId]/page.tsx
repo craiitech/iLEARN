@@ -239,7 +239,7 @@ export default function CourseDetailPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Block Code</TableHead>
+                                            <TableHead>Block Name</TableHead>
                                             <TableHead>Schedule</TableHead>
                                             <TableHead>Students</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
@@ -248,7 +248,7 @@ export default function CourseDetailPage() {
                                     <TableBody>
                                         {blocks.map((block) => (
                                             <TableRow key={block.id}>
-                                                <TableCell className="font-medium">{block.blockCode}</TableCell>
+                                                <TableCell className="font-medium">{block.blockName}</TableCell>
                                                 <TableCell>{block.schedule}</TableCell>
                                                 <TableCell>0</TableCell>
                                                 <TableCell className="text-right">

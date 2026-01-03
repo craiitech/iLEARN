@@ -125,7 +125,7 @@ function BlockDetailPage() {
                 <CardHeader>
                     <div className="flex items-start justify-between">
                         <div>
-                            <CardTitle className="text-2xl font-headline">Manage Block</CardTitle>
+                            <CardTitle className="text-2xl font-headline">{block.blockName}</CardTitle>
                             <CardDescription>Edit the schedule and view the enrollment code for this section.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
@@ -147,7 +147,7 @@ function BlockDetailPage() {
                     </div>
                 </CardHeader>
                  <CardContent>
-                    <EditBlockForm blockRef={blockRef} currentSchedule={block.schedule} />
+                    <EditBlockForm blockRef={blockRef} currentSchedule={block.schedule} currentBlockName={block.blockName} />
                  </CardContent>
             </Card>
         </div>

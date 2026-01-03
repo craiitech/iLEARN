@@ -32,6 +32,7 @@ import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, DocumentReference } from "firebase/firestore";
 
 const formSchema = z.object({
+  blockName: z.string().min(1, "Block name is required."),
   schedule: z.string().min(5, "Schedule must be at least 5 characters."),
 });
 
@@ -48,6 +49,7 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      blockName: "",
       schedule: "",
     },
   });
@@ -66,7 +68,7 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
       
       toast({
         title: "Block Created!",
-        description: `The block has been created. You can generate an enrollment code from the 'Manage' page.`,
+        description: `The block "${values.blockName}" has been created. You can generate an enrollment code from the 'Manage' page.`,
       });
 
       form.reset();
@@ -101,6 +103,22 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
         </DialogHeader>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+              <FormField
+                control={form.control}
+                name="blockName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Block Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Section A, Morning Class" {...field} />
+                    </FormControl>
+                     <FormDescription>
+                      A human-readable name for this block.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="schedule"
