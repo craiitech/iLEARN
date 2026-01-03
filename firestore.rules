@@ -26,11 +26,15 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      // Allow a user to read their own document (e.g. to check for role)
       allow get: if request.auth.uid == userId;
       allow list: if false; 
+      // Allow a user to create their own document if it doesn't exist yet.
+      // The user's UID must match the document ID they are trying to create.
       allow create: if request.auth.uid == userId;
-      allow update: if isOwner(userId) && resource != null && isImmutable('id');
-      allow delete: if isOwner(userId) && resource != null;
+      // Allow a user to update their own document, but not change their ID.
+      allow update: if isOwner(userId) && isImmutable('id');
+      allow delete: if isOwner(userId);
     }
 
     match /users/{teacherId}/courses/{courseId} {
