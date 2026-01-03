@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Query,
   onSnapshot,
@@ -53,14 +54,12 @@ export function useCollection<T = any>(
   const [data, setData] = useState<StateDataType>(null);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
   const { isUserLoading } = useFirebase();
-
-  // isLoading is true if we are waiting for auth or if the query is not ready yet.
-  const isLoading = isUserLoading || !memoizedTargetRefOrQuery;
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Do not proceed if the query is not ready or auth is in progress.
     if (!memoizedTargetRefOrQuery || isUserLoading) {
-      // Reset state when query/auth changes and is not ready.
+      setIsLoading(true);
       setData(null);
       setError(null);
       return;
@@ -75,19 +74,24 @@ export function useCollection<T = any>(
         }
         setData(results);
         setError(null);
+        setIsLoading(false);
       },
       (snapshotError: FirestoreError) => {
         let path = 'unknown/path';
-        try {
-            if (isQuery(memoizedTargetRefOrQuery)) {
-                path = memoizedTargetRefOrQuery.ref.path;
-            } else if ('path' in memoizedTargetRefOrQuery) {
-                path = (memoizedTargetRefOrQuery as CollectionReference).path;
+        // This is a safe-guard. Even if a race condition caused this error,
+        // we will try our best to get the path, but won't fail if we can't.
+        if (memoizedTargetRefOrQuery) {
+            try {
+                if (isQuery(memoizedTargetRefOrQuery)) {
+                    path = memoizedTargetRefOrQuery.ref.path;
+                } else if ('path' in memoizedTargetRefOrQuery) {
+                    path = (memoizedTargetRefOrQuery as CollectionReference).path;
+                }
+            } catch (e) {
+                console.error("useCollection: Could not determine path for Firestore error reporting:", e);
             }
-        } catch (e) {
-            console.error("useCollection: Could not determine path for Firestore error reporting:", e);
         }
-
+        
         const contextualError = new FirestorePermissionError({
           operation: 'list',
           path,
@@ -95,6 +99,7 @@ export function useCollection<T = any>(
 
         setError(contextualError);
         setData(null);
+        setIsLoading(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
@@ -105,5 +110,5 @@ export function useCollection<T = any>(
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery, isUserLoading]); // Re-run effect if query or user loading state changes.
 
-  return { data, isLoading, error };
+  return { data, isLoading: isLoading || isUserLoading, error };
 }

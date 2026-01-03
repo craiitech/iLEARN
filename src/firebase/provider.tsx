@@ -75,9 +75,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    // Set loading true, user to current user, and clear error before listener runs
-    setUserAuthState({ user: auth.currentUser, isUserLoading: true, userError: null });
-
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
@@ -165,5 +162,3 @@ export const useUser = (): UserHookResult => { // Renamed from useAuthUser
   const { user, isUserLoading, userError } = useFirebase(); // Leverages the main hook
   return { user, isUserLoading, userError };
 };
-
-    
