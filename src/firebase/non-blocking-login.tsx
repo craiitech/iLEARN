@@ -9,6 +9,7 @@ import {
   signInWithPopup,
   User,
   FirebaseApp,
+  UserCredential,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
@@ -32,25 +33,26 @@ async function createUserProfile(app: FirebaseApp, user: User, role: 'teacher' |
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export async function initiateEmailSignUp(authInstance: Auth, email: string, password: string, role: 'teacher' | 'student'): Promise<void> {
+export async function initiateEmailSignUp(authInstance: Auth, email: string, password: string, role: 'teacher' | 'student'): Promise<UserCredential> {
   const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
   await createUserProfile(authInstance.app, userCredential.user, role);
+  return userCredential;
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<void> {
-  return signInWithEmailAndPassword(authInstance, email, password).then(() => {});
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<UserCredential> {
+  return signInWithEmailAndPassword(authInstance, email, password);
 }
 
 /** Initiate Google sign-in (non-blocking). */
-export async function initiateGoogleSignIn(authInstance: Auth, role: 'teacher' | 'student'): Promise<void> {
+export async function initiateGoogleSignIn(authInstance: Auth, role: 'teacher' | 'student'): Promise<UserCredential> {
   const provider = new GoogleAuthProvider();
   const result = await signInWithPopup(authInstance, provider);
-  
   await createUserProfile(authInstance.app, result.user, role);
+  return result;
 }
 
 /** Initiate anonymous sign-in (non-blocking). */
-export function initiateAnonymousSignIn(authInstance: Auth): Promise<void> {
-  return signInAnonymously(authInstance).then(() => {});
+export function initiateAnonymousSignIn(authInstance: Auth): Promise<UserCredential> {
+  return signInAnonymously(authInstance);
 }

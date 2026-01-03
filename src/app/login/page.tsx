@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase, useDoc } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import {
   initiateGoogleSignIn,
 } from '@/firebase/non-blocking-login';
@@ -40,32 +39,37 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
     const { toast } = useToast();
     const { auth } = useFirebase();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const router = useRouter();
 
     const handleAuthError = (error: any) => {
+        setIsLoading(false);
         console.error("Authentication Error:", error);
-        
         const firebaseError = error as FirebaseError;
+        // Don't show a toast for user-cancelled popups.
         if (firebaseError.code === 'auth/cancelled-popup-request' || firebaseError.code === 'auth/popup-closed-by-user') {
             return;
         }
-
         toast({
             variant: 'destructive',
             title: 'Authentication Failed',
-            description: 'An error occurred during sign-in. Check the console for details.',
+            description: firebaseError.message || 'An error occurred during sign-in.',
         });
     };
 
     async function onGoogleSignIn() {
         setIsLoading(true);
         try {
-            await initiateGoogleSignIn(auth, role);
-            // After sign-in, the useEffect in the main component will handle redirection.
+            const userCredential = await initiateGoogleSignIn(auth, role);
+            // After sign-in, redirect based on the role they signed in with.
+            if (role === 'teacher') {
+                router.replace('/teacher/dashboard');
+            } else {
+                router.replace('/student/dashboard');
+            }
         } catch (error) {
             handleAuthError(error);
-        } finally {
-            setIsLoading(false);
         }
+        // No need to set isLoading to false here, as a successful sign-in will navigate away.
     }
 
     return (
@@ -86,29 +90,21 @@ function AuthForm({ role }: { role: 'student' | 'teacher' }) {
 }
 
 export default function UnifiedLoginPage() {
-  const { user, isUserLoading, firestore } = useFirebase();
+  const { user, isUserLoading } = useFirebase();
   const router = useRouter();
 
-  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
-  const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
-
+  // If user is already logged in, redirect them from the login page.
+  // This is a simple effect that relies on the layout to handle role-based routing.
   useEffect(() => {
-    // This effect handles redirection for already logged-in users.
-    if (isUserLoading || isUserDocLoading) {
-      return; // Wait for data
+    if (!isUserLoading && user) {
+        // We don't know the role here, so we send them to a neutral-ish place.
+        // The layouts for /teacher/* and /student/* will handle the final redirection.
+        router.replace('/teacher/dashboard'); 
     }
-    
-    if (user && userData) {
-      const { role } = userData;
-      if (role === 'teacher') {
-          router.replace('/teacher/dashboard');
-      } else if (role === 'student') {
-          router.replace('/student/dashboard');
-      }
-    }
-  }, [user, userData, isUserLoading, isUserDocLoading, router]);
+  }, [user, isUserLoading, router]);
 
-  if (isUserLoading || (user && isUserDocLoading)) {
+  // While checking auth state, show a loader.
+  if (isUserLoading) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -116,7 +112,7 @@ export default function UnifiedLoginPage() {
       );
   }
   
-  // If user is loaded and they are not being redirected, show the login form.
+  // If user is not logged in, show the login form.
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">

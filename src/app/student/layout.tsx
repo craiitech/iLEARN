@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -24,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
 import { useFirebase, useDoc } from "@/firebase";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { doc } from "firebase/firestore";
 
@@ -44,26 +43,29 @@ export default function StudentLayout({
   const isLoading = isUserLoading || isUserDocLoading;
 
   useEffect(() => {
+    // Wait until loading is complete before doing anything.
     if (isLoading) {
-      return; // Wait for all data to load
+      return;
     }
 
-    // If there's no user, redirect to login from any student page
+    // If there's no user, redirect to login from any student page.
     if (!user) {
       router.replace('/login');
       return;
     }
 
-    // If user data is loaded and the role is not 'student', redirect them
+    // If user data is loaded and the role is not 'student', redirect them.
     if (userData && userData.role !== 'student') {
-      router.replace(`/${userData.role || 'teacher'}/dashboard`);
+      // Redirect to the correct dashboard based on their actual role.
+      router.replace(userData.role === 'teacher' ? '/teacher/dashboard' : '/login');
       return;
     }
 
-  }, [user, userData, isLoading, router, pathname]);
+  }, [user, userData, isLoading, router]);
 
   // While loading authentication state or user role, show a full-page loader.
-  if (isLoading || !user || !userData) {
+  // This is the gatekeeper for the entire student section.
+  if (isLoading || !userData) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -71,7 +73,7 @@ export default function StudentLayout({
       );
   }
   
-  // If the user is authorized, render the layout
+  // If the user is authorized, render the layout.
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">

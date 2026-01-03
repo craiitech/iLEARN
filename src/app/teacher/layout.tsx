@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -26,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
 import { useFirebase, useDoc } from "@/firebase";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { doc } from "firebase/firestore";
 
@@ -38,34 +37,36 @@ export default function TeacherLayout({
 }) {
   const { user, isUserLoading, firestore } = useFirebase();
   const router = useRouter();
-  const pathname = usePathname();
-
+  
   const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
   const { data: userData, isLoading: isUserDocLoading } = useDoc(userDocRef);
   
   const isLoading = isUserLoading || isUserDocLoading;
 
   useEffect(() => {
+    // Wait until loading is complete before doing anything.
     if (isLoading) {
-      return; // Wait for all data to load
+      return;
     }
 
-    // If there's no user, redirect to login from any teacher page
+    // If there's no user, redirect to login from any teacher page.
     if (!user) {
       router.replace('/login');
       return;
     }
 
-    // If user data is loaded and the role is not 'teacher', redirect them
+    // If user data is loaded and the role is not 'teacher', redirect them.
     if (userData && userData.role !== 'teacher') {
-      router.replace(`/${userData.role || 'student'}/dashboard`);
+       // Redirect to the correct dashboard based on their actual role.
+      router.replace(userData.role === 'student' ? '/student/dashboard' : '/login');
       return;
     }
     
-  }, [user, userData, isLoading, router, pathname]);
+  }, [user, userData, isLoading, router]);
 
   // While loading authentication state or user role, show a full-page loader.
-  if (isLoading || !user || !userData) {
+  // This is the gatekeeper for the entire teacher section.
+  if (isLoading || !userData) {
       return (
           <div className="flex h-screen w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
