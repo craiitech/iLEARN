@@ -30,7 +30,8 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if false; 
       // Allow a user to create their own document if it doesn't exist yet.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      // The user's UID must match the document ID they are trying to create.
+      allow create: if request.auth.uid == userId;
       // Allow a user to update their own document, but not change their ID.
       allow update: if isOwner(userId) && isImmutable('id');
       allow delete: if isOwner(userId);
@@ -75,7 +76,7 @@ service cloud.firestore {
       // A teacher can list enrollments if the query filters by their teacherId.
       // A student can list their OWN enrollments by filtering by their studentId.
       allow list: if (isTeacher() && request.query.where.teacherId == request.auth.uid) 
-                   || (request.query.where.studentId == request.auth.uid);
+                   || (isSignedIn() && request.query.where.studentId == request.auth.uid);
 
       allow update, delete: if false;
     }
