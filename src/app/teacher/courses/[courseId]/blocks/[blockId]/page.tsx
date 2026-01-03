@@ -28,7 +28,7 @@ function BlockDetailPage() {
     const { data: block, isLoading: isBlockLoading } = useDoc(blockRef);
 
     const enrollmentsQuery = useMemo(() => {
-        if (isUserLoading || !user) return null;
+        if (isUserLoading || !user || !blockId) return null;
         // Query the top-level 'enrollments' collection
         return query(
             collection(firestore, "enrollments"),
