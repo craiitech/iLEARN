@@ -37,7 +37,7 @@ function BlockDetailPage() {
         return doc(firestore, `users/${user.uid}/courses/${courseId}/blocks`, blockId);
     }, [firestore, user, courseId, blockId, isUserLoading]);
 
-    const { data: block, isLoading: isBlockLoading } = useDoc(blockRef);
+    const { data: block, isLoading: isBlockLoading, refetch } = useDoc(blockRef);
 
      // Effect to auto-repair a block if it's missing a teacherId
     useEffect(() => {
@@ -49,6 +49,7 @@ function BlockDetailPage() {
                         title: "Block Repaired",
                         description: "Successfully updated block with teacher information.",
                     });
+                    refetch(); // Refetch the document to get the updated data
                 })
                 .catch((error) => {
                      console.error("Failed to auto-repair block:", error);
@@ -59,7 +60,7 @@ function BlockDetailPage() {
                     });
                 });
         }
-    }, [block, blockRef, user, toast]);
+    }, [block, blockRef, user, toast, refetch]);
     
     const copyToClipboard = () => {
         if (block?.blockCode) {

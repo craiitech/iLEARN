@@ -1,13 +1,14 @@
 
 'use client';
     
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   DocumentReference,
   onSnapshot,
   DocumentData,
   FirestoreError,
   DocumentSnapshot,
+  getDoc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -24,6 +25,7 @@ export interface UseDocResult<T> {
   data: WithId<T> | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
+  refetch: () => void; // Function to manually refetch the document
 }
 
 /**
@@ -35,7 +37,7 @@ export interface UseDocResult<T> {
  * @template T Optional type for document data. Defaults to any.
  * @param {DocumentReference<DocumentData> | null | undefined} memoizedDocRef -
  * The memoized Firestore DocumentReference. Waits if null/undefined.
- * @returns {UseDocResult<T>} Object with data, isLoading, error.
+ * @returns {UseDocResult<T>} Object with data, isLoading, error, and refetch function.
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
@@ -47,6 +49,18 @@ export function useDoc<T = any>(
   const { isUserLoading } = useFirebase();
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchDoc = useCallback(async (ref: DocumentReference<DocumentData>) => {
+    try {
+        const docSnap = await getDoc(ref);
+        if (docSnap.exists()) {
+            setData({ ...(docSnap.data() as T), id: docSnap.id });
+        } else {
+            setData(null);
+        }
+    } catch (e) {
+        // Error handling will be managed by the onSnapshot listener
+    }
+  }, []);
 
   useEffect(() => {
     // Do not proceed if the doc ref is not ready or auth is in progress.
@@ -100,5 +114,11 @@ export function useDoc<T = any>(
     return () => unsubscribe();
   }, [memoizedDocRef, isUserLoading]); // Re-run effect if docRef or user loading state changes.
 
-  return { data, isLoading: isLoading || isUserLoading, error };
+  const refetch = useCallback(() => {
+    if(memoizedDocRef) {
+      fetchDoc(memoizedDocRef);
+    }
+  }, [memoizedDocRef, fetchDoc]);
+
+  return { data, isLoading: isLoading || isUserLoading, error, refetch };
 }
