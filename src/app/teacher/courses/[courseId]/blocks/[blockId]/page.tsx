@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Loader2, ClipboardCopy, Eye } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useFirebase, useDoc } from "@/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { EditBlockForm } from "@/components/course/edit-block-form";
 
@@ -49,15 +49,14 @@ function BlockDetailPage() {
         }
     };
 
-    const handleRevealCode = () => {
-        if (block?.blockCode) return; // If code exists, do nothing.
-        if (!blockRef) return;
+    const handleRevealCode = async () => {
+        if (block?.blockCode || !blockRef) return;
 
         setIsRevealingCode(true);
         try {
             const newBlockCode = generateBlockCode();
             
-            updateDocumentNonBlocking(blockRef, { blockCode: newBlockCode });
+            await updateDoc(blockRef, { blockCode: newBlockCode });
             
             toast({
                 title: "Block Code Generated",
@@ -71,9 +70,9 @@ function BlockDetailPage() {
                 description: (error as Error).message,
             });
         } finally {
-            // The optimistic update will trigger a re-render from useDoc, 
-            // so we don't need to manually set isRevealingCode to false here.
-            // It will happen automatically when the new block data arrives.
+            // The optimistic update from useDoc will handle the UI change,
+            // but we can set this false to re-enable the button if the toast is dismissed.
+            setIsRevealingCode(false);
         }
     }
 

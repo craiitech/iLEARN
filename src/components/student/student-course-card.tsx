@@ -15,9 +15,10 @@ export function StudentCourseCard({ enrollment }: { enrollment: any }) {
     const courseRef = useMemo(() => {
         if (!enrollment.teacherId || !enrollment.courseId) return null;
         return doc(firestore, `users/${enrollment.teacherId}/courses`, enrollment.courseId);
-    }, [firestore, enrollment]);
+    }, [firestore, enrollment.teacherId, enrollment.courseId]);
 
     const blockRef = useMemo(() => {
+        // The block is a subcollection of the course, so the courseRef is needed.
         if (!courseRef || !enrollment.blockId) return null;
         return doc(courseRef, 'blocks', enrollment.blockId);
     }, [courseRef, enrollment.blockId]);
