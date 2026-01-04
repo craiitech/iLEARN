@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2, ClipboardCopy, Eye } from "lucide-react";
@@ -38,6 +38,28 @@ function BlockDetailPage() {
     }, [firestore, user, courseId, blockId, isUserLoading]);
 
     const { data: block, isLoading: isBlockLoading } = useDoc(blockRef);
+
+     // Effect to auto-repair a block if it's missing a teacherId
+    useEffect(() => {
+        if (block && !block.teacherId && blockRef && user) {
+            console.log(`Block ${block.id} is missing teacherId. Attempting to repair.`);
+            updateDoc(blockRef, { teacherId: user.uid })
+                .then(() => {
+                    toast({
+                        title: "Block Repaired",
+                        description: "Successfully updated block with teacher information.",
+                    });
+                })
+                .catch((error) => {
+                     console.error("Failed to auto-repair block:", error);
+                     toast({
+                        variant: "destructive",
+                        title: "Block Repair Failed",
+                        description: "Could not update this block with the required teacher information.",
+                    });
+                });
+        }
+    }, [block, blockRef, user, toast]);
     
     const copyToClipboard = () => {
         if (block?.blockCode) {
@@ -70,8 +92,6 @@ function BlockDetailPage() {
                 description: (error as Error).message,
             });
         } finally {
-            // The optimistic update from useDoc will handle the UI change,
-            // but we can set this false to re-enable the button if the toast is dismissed.
             setIsRevealingCode(false);
         }
     }
