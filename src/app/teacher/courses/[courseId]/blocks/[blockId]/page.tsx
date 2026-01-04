@@ -152,7 +152,7 @@ function BlockDetailPage() {
                     </div>
                 </CardHeader>
                  <CardContent>
-                    <EditBlockForm blockRef={blockRef} currentSchedule={block.schedule} currentBlockName={block.blockName} />
+                    <EditBlockForm courseId={courseId} blockRef={blockRef} currentSchedule={block.schedule} currentBlockName={block.blockName} />
                  </CardContent>
             </Card>
         </div>

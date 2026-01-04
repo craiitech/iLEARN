@@ -21,6 +21,7 @@ import { Loader2, Save } from "lucide-react";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { DocumentReference } from "firebase/firestore";
 import { Input } from "../ui/input";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   blockName: z.string().min(1, "Block name is required."),
@@ -31,11 +32,13 @@ type EditBlockFormProps = {
     blockRef: DocumentReference;
     currentBlockName: string;
     currentSchedule: string;
+    courseId: string;
 }
 
-export function EditBlockForm({ blockRef, currentBlockName, currentSchedule }: EditBlockFormProps) {
+export function EditBlockForm({ blockRef, currentBlockName, currentSchedule, courseId }: EditBlockFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,6 +57,8 @@ export function EditBlockForm({ blockRef, currentBlockName, currentSchedule }: E
         title: "Block Updated!",
         description: `The block details have been successfully updated.`,
       });
+      
+      router.push(`/teacher/courses/${courseId}`);
 
     } catch (error) {
       console.error("Error updating block:", error);
