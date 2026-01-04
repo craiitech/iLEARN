@@ -28,8 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, DocumentReference } from "firebase/firestore";
+import { collection, DocumentReference, addDoc } from "firebase/firestore";
 import { useFirebase } from "@/firebase";
 
 const formSchema = z.object({
@@ -65,7 +64,7 @@ export function CreateBlockDialog({ courseRef }: CreateBlockDialogProps) {
     try {
       const blocksCollection = collection(courseRef, 'blocks');
       // The block code will now be generated on demand from the block management page.
-      await addDocumentNonBlocking(blocksCollection, {
+      await addDoc(blocksCollection, {
         ...values,
         blockCode: null, // Ensure blockCode is explicitly null on creation
         courseId: courseRef.id,
