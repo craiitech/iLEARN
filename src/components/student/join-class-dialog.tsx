@@ -60,9 +60,12 @@ export function JoinClassDialog() {
     }
 
     try {
+        // Normalize the block code to uppercase and trim
+        const normalizedCode = values.blockCode.trim().toUpperCase();
+        
         // Query the 'blocks' collection group to find the block with the matching code
         const blocksRef = collectionGroup(firestore, 'blocks');
-        const q = query(blocksRef, where("blockCode", "==", values.blockCode));
+        const q = query(blocksRef, where("blockCode", "==", normalizedCode));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -91,7 +94,7 @@ export function JoinClassDialog() {
 
             toast({
                 title: "Successfully Joined Class!",
-                description: `You are now enrolled in block ${values.blockCode}.`,
+                description: `You are now enrolled in block ${normalizedCode}.`,
             });
 
             form.reset();

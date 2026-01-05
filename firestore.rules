@@ -45,7 +45,8 @@ service cloud.firestore {
     }
 
     match /users/{teacherId}/courses/{courseId} {
-        allow get, list: if isTeacherOwner(teacherId);
+        allow get: if isSignedIn();
+        allow list: if isTeacherOwner(teacherId);
         allow create: if isTeacherOwner(teacherId) && request.resource.data.teacherId == teacherId;
         allow update: if isTeacherOwner(teacherId) && resource != null && isImmutable('teacherId');
         allow delete: if isTeacherOwner(teacherId);
